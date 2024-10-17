@@ -1,2 +1,2 @@
-# WS24_DataScienceForEM
-Repo for Winter Semester 2024 Lecture Data Science For Electron Microscopy
+# SS24 Data Science For EM
+Data Science for Electron Microscopy Lecture

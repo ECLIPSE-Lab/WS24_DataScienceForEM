@@ -1,0 +1,471 @@
+---
+format: 
+  revealjs:
+    theme: "night" #["theme/q-theme.scss"]
+    slide-number: c/t
+    logo: "eclipse_logo_small.png"
+    footer: "[SS24_DataScienceForEM](https://github.com/ECLIPSE-Lab/SS24_DataScienceForEM)"
+    code-copy: true
+    center-title-slide: false
+    include-in-header: heading-meta.html
+    code-link: true
+    code-overflow: wrap
+    highlight-style: a11y
+    height: 1080
+    width: 1920
+execute: 
+  eval: true
+  echo: true
+---
+
+# Bayesian Optimization and Active Learning
+
+<h2> Data Science in Electron Microscopy </h2>
+
+<hr>
+
+<h3> Philipp Pelz </h3>
+
+<h3> 2024-01-09 </h3>
+<br>
+
+<h3>  &nbsp; [https://github.com/ECLIPSE-Lab/SS24_DataScienceForEM](https://github.com/ECLIPSE-Lab/SS24_DataScienceForEM)
+
+## Introduction
+
+- Bayesian Optimization is a method for optimizing black-box functions that are expensive to evaluate.
+- Useful for tuning hyperparameters in machine learning models.
+
+---
+
+## Gold Mining Analogy
+
+- Goal: Find the maximum gold content along a line with minimal drillings.
+- Two objectives:
+  1. **Active Learning**: Estimate gold distribution accurately.
+  2. **Bayesian Optimization**: Find the location of maximum gold content.
+
+![Gold Mining](./img/GT.svg)
+---
+
+## Active Learning
+
+- Aim: Minimize labeling costs while maximizing modeling accuracy.
+- Strategy: Label the point with the highest model uncertainty (variance).
+- Use Gaussian Process (GP) as a surrogate model for uncertainty estimates.
+![](./img/prior2posterior.png)
+- Each new data point updates our surrogate model, moving it closer to the ground truth. The black line and the grey shaded region indicate the mean 
+μ and uncertainty μ±σ in our gold distribution estimate before and after drilling.
+---
+
+
+![](./img/0.png)
+
+---
+
+![](./img/1.png)
+
+---
+
+![](./img/2.png)
+
+---
+
+![](./img/3.png)
+
+---
+
+![](./img/4.png)
+
+---
+
+![](./img/5.png)
+
+---
+
+![](./img/6.png)
+
+---
+
+![](./img/7.png)
+
+---
+
+![](./img/8.png)
+
+## Bayesian Optimization
+
+- Aim: Find the maximum of an unknown function efficiently.
+- Balance exploration (unknown regions) and exploitation (known high-value regions).
+- Key component: Acquisition function.
+
+To solve this problem, we will follow the following algorithm:
+
+1. We first choose a surrogate model for modeling the true function f and define its prior.
+2. Given the set of observations (function evaluations), use Bayes rule to obtain the posterior.
+3. Use an acquisition function α(x), which is a function of the posterior, to decide the next sample point 
+4. Add newly sampled data to the set of observations and goto step #2 till convergence or budget elapses.
+
+---
+
+## Surrogate Models and Gaussian Processes
+
+- Surrogate models estimate the unknown function.
+- GPs are flexible and provide uncertainty estimates.
+- Update the surrogate model using Bayes' rule after each evaluation.
+
+---
+
+# Acquisition Functions
+## Probability of Improvement (PI)
+
+- Chooses the point with the highest probability of improvement over the current best.
+- Mathematically, we write the selection of next point as follows: $x_{t+1} = argmax(\alpha_{PI}(x)) = argmax(P(f(x) \geq (f(x^+) +\epsilon)))$
+- $\begin{aligned}
+        x_{t+1} & = argmax(\alpha_{PI}(x))\\
+        & = argmax(P(f(x) \geq (f(x^+) +\epsilon)))
+        \end{aligned}$
+- we are just finding the upper-tail probability (or the CDF) of the surrogate posterior. Moreover, if we are using a GP as a surrogate the expression above converts to
+- $x^+ = \text{argmax}_{x_i \in x_{1:t}}f(x_i)$
+
+---
+
+![](./img/density_pi.png)
+
+## Intuition behind ϵ in PI: ϵ = 0.075
+
+![](./img/0%20(1).png)
+
+---
+
+![](./img/1%20(1).png)
+
+---
+
+![](./img/2%20(1).png)
+
+---
+
+![](./img/3%20(1).png)
+
+---
+
+![](./img/4%20(1).png)
+
+---
+
+![](./img/5%20(1).png)
+
+---
+
+![](./img/6%20(1).png)
+
+---
+
+![](./img/7%20(1).png)
+
+---
+
+![](./img/8%20(1).png)
+
+---
+
+![](./img/9%20(1).png)
+
+---
+
+- Looking at the graph above, we see that we reach the global maxima in a few iterations . 
+- Our surrogate possesses a large uncertainty in 
+x∈[2,4] in the first few iterations 
+- The acquisition function initially exploits regions with a high promise , which leads to high uncertainty in the region x∈[2,4]. 
+- This observation also shows that we do not need to construct an accurate estimate of the black-box function to find its maximum.
+
+## Intuition behind ϵ in PI: ϵ = 0.3
+
+![](./img/0%20(2).png)
+
+---
+
+![](./img/1%20(2).png)
+
+---
+
+![](./img/2%20(2).png)
+
+---
+
+![](./img/3%20(2).png)
+
+---
+
+![](./img/4%20(2).png)
+
+---
+
+![](./img/5%20(2).png)
+
+---
+
+![](./img/6%20(2).png)
+
+---
+
+![](./img/7%20(2).png)
+
+---
+
+![](./img/8%20(2).png)
+
+---
+
+![](./img/9%20(2).png)
+
+---
+
+- We see that we made things worse! 
+- Our model now uses ϵ=3, and we are unable to exploit when we land near the global maximum. Moreover, with high exploration, the setting becomes similar to active learning.
+- Our quick experiments above help us conclude that ϵ controls the degree of exploration in the PI acquisition function.
+
+## Expected Improvement: Introduction 
+- Probability of improvement considers *how likely* an improvement is.
+- Expected Improvement (EI) considers *how much* we can improve.
+- **Key Idea**: Choose the next query point with the highest expected improvement over the current max $f(x^+)$.
+
+## EI: Mathematical Formulation
+- **Equation**:
+$x_{t+1} = \arg\min_x \mathbb{E} \left( ||h_{t+1}(x) - f(x^\star) || \ | \ \mathcal{D}_t \right)$
+- **Components**:
+  - $f$: Actual ground truth function.
+  - $h_{t+1}$: Posterior mean of the surrogate at $t+1^{th}$ timestep.
+  - $\mathcal{D}_t$: Training data.
+  - $x^\star$: Actual position where $f$ takes the maximum value.
+
+## EI: Mockus' Acquisition Function
+- **Equation**:
+$x_{t+1} = \mathrm{argmax}_x \mathbb{E} \left( {max} \{ 0, \ h_{t+1}(x) - f(x^+) \} \ | \ \mathcal{D}_t \right)$
+- **Components**:
+  - $ f(x^+) $: Maximum value encountered so far.
+
+### EI: Analytical Expression for GP Surrogate
+- **Equation**:
+$EI(x)=\begin{cases}(\mu_t(x) - f(x^+) - \epsilon)\Phi(Z) + \sigma_t(x)\phi(Z), & \text{if}\ \sigma_t(x) > 0\\ 0, & \text{if}\ \sigma_t(x) = 0
+\end{cases}$
+
+$Z= \frac{\mu_t(x) - f(x^+) - \epsilon}{\sigma_t(x)}$
+
+
+## EI: When is EI High?
+- EI is high when:
+  - The expected value of $\mu_t(x) - f(x^+)$ is high.
+  - The uncertainty $\sigma_t(x)$ around a point is high.
+
+## EI: Moderating Exploration with $\epsilon$
+- Adjusting $\epsilon$ moderates exploration.
+- **Examples**:
+  - $\epsilon = 0.01$: Close to the global maxima in few iterations.
+  - $\epsilon = 0.3$: More exploration, less exploitation near the global maxima.
+  - $\epsilon = 3$: Too much exploration, quick reach near the global maxima, less exploitation.
+
+## EI: Visualizations
+## Intuition behind ϵ in EI: ϵ = 0.3
+
+![](./img/0%20(4).png)
+
+---
+
+![](./img/1%20(4).png)
+
+---
+
+![](./img/2%20(4).png)
+
+---
+
+![](./img/3%20(4).png)
+
+---
+
+![](./img/4%20(4).png)
+
+---
+
+![](./img/5%20(4).png)
+
+---
+
+![](./img/6%20(4).png)
+
+---
+
+![](./img/7%20(4).png)
+
+---
+
+![](./img/8%20(4).png)
+
+---
+
+![](./img/9%20(4).png)
+
+
+## Intuition behind ϵ in PI: ϵ = 0.3
+
+![](./img/0%20(5).png)
+
+---
+
+![](./img/1%20(5).png)
+
+---
+
+![](./img/2%20(5).png)
+
+---
+
+![](./img/3%20(5).png)
+
+---
+
+![](./img/4%20(5).png)
+
+---
+
+![](./img/5%20(5).png)
+
+---
+
+![](./img/6%20(5).png)
+
+---
+
+![](./img/7%20(5).png)
+
+---
+
+![](./img/8%20(5).png)
+
+---
+
+![](./img/9%20(5).png)
+
+
+## Intuition behind ϵ in PI: ϵ = 3
+
+![](./img/0%20(6).png)
+
+---
+
+![](./img/1%20(6).png)
+
+---
+
+![](./img/2%20(6).png)
+
+---
+
+![](./img/3%20(6).png)
+
+---
+
+![](./img/4%20(6).png)
+
+---
+
+![](./img/5%20(6).png)
+
+---
+
+![](./img/6%20(6).png)
+
+---
+
+![](./img/7%20(6).png)
+
+---
+
+![](./img/8%20(6).png)
+
+---
+
+![](./img/9%20(6).png)
+
+
+
+
+
+## Thompson Sampling
+
+- Samples a function from the posterior and optimizes it.
+- Balances exploration and exploitation naturally.
+
+![](./img/thompson.svg)
+
+## Intuition behind Thompson Sampling
+
+![](./img/0%20(7).png)
+
+---
+
+![](./img/1%20(7).png)
+
+---
+
+![](./img/2%20(7).png)
+
+---
+
+![](./img/3%20(7).png)
+
+---
+
+![](./img/4%20(7).png)
+
+---
+
+![](./img/5%20(7).png)
+
+---
+
+![](./img/6%20(7).png)
+
+---
+
+![](./img/7%20(7).png)
+
+---
+
+![](./img/8%20(7).png)
+
+---
+
+![](./img/9%20(7).png)
+
+
+## Hyperparameter Tuning
+
+- Common use of Bayesian Optimization.
+- Examples: SVM, Random Forest, Neural Networks.
+- Bayesian Optimization efficiently searches hyperparameter space.
+
+---
+
+## Example: SVM Hyperparameter Tuning
+
+- Optimize SVM hyperparameters \( \gamma \) and \( C \) on a dataset.
+- Compare acquisition functions (PI, EI, UCB).
+
+---
+
+## Summary
+
+- Bayesian Optimization is powerful for optimizing expensive black-box functions.
+- Key elements: Surrogate model (GP), Acquisition functions (PI, EI, UCB).
+- Applications in hyperparameter tuning for ML models.
+
+![](./img/comp3d.svg)
+
+---
+
+## References
+
+- [Distill Article on Bayesian Optimization](https://distill.pub/2020/bayesian-optimization/)

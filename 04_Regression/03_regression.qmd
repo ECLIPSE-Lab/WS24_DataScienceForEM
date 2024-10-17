@@ -1,0 +1,60 @@
+---
+format: 
+  revealjs:
+    theme: "night" #["theme/q-theme.scss"]
+    slide-number: c/t
+    logo: "eclipse_logo_small.png"
+    footer: "[SS24_DataScienceForEM](https://github.com/ECLIPSE-Lab/SS24_DataScienceForEM)"
+    code-copy: true
+    center-title-slide: false
+    include-in-header: ../heading-meta.html
+    code-link: true
+    code-overflow: wrap
+    highlight-style: a11y
+    height: 1080
+    width: 1920
+execute: 
+  eval: true
+  echo: true
+---
+
+<h1> Regression and optimization </h1>
+
+<h2> Data Science in Electron Microscopy </h2>
+
+<hr>
+
+<h3> Philipp Pelz </h3>
+
+<h3> 2024 </h3>
+<br>
+
+<h3>  &nbsp; [https://github.com/ECLIPSE-Lab/SS24_DataScienceForEM](https://github.com/ECLIPSE-Lab/SS24_DataScienceForEM)
+
+## Data Manipulation
+:label:`sec_ndarray`
+
+- need some way to store and manipulate data.
+Generally, there are two important things 
+we need to do with data: 
+(i) acquire them; 
+(ii) process them
+
+- let's get our hands dirty
+with $n$-dimensional arrays, 
+which we also call *tensors*.
+- For all modern deep learning frameworks,
+the *tensor class* (`ndarray` in MXNet, 
+`Tensor` in PyTorch and TensorFlow) 
+resembles NumPy's `ndarray`,
+with a few killer features added.
+- First, the tensor class
+supports automatic differentiation.
+- Second, it leverages GPUs
+to accelerate numerical computation,
+whereas NumPy only runs on CPUs.
+These properties make neural networks
+both easy to code and fast to run.
+
+
+

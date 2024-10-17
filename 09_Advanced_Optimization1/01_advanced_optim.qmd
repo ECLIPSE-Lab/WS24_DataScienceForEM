@@ -1,0 +1,185 @@
+---
+format: 
+  revealjs:
+    theme: "night" #["theme/q-theme.scss"]
+    slide-number: c/t
+    logo: "eclipse_logo_small.png"
+    footer: "[SS24_DataScienceForEM](https://github.com/ECLIPSE-Lab/SS24_DataScienceForEM)"
+    code-copy: true
+    center-title-slide: false
+    include-in-header: ../heading-meta.html
+    code-link: true
+    code-overflow: wrap
+    highlight-style: a11y
+    height: 1080
+    width: 1920
+execute: 
+  eval: true
+  echo: true
+---
+
+<h1> Advanced Optimization in Electron Microscopy </h1>
+
+<h2> Data Science in Electron Microscopy </h2>
+
+<hr>
+
+<h3> Philipp Pelz </h3>
+
+<h3> 2024-01-31 </h3>
+<br>
+
+<h3>  &nbsp; [https://github.com/ECLIPSE-Lab/SS23_DataScienceForEM](https://github.com/ECLIPSE-Lab/SS24_DataScienceForEM)
+
+## Computational Imaging as Inverse Problem solving 1
+
+
+![](./img/inv1.png){width=100%}
+
+## Computational Imaging as Inverse Problem solving 2
+
+
+![](./img/2024_07_06_11_06_53.png){width=100%}
+
+## Computational Imaging as Inverse Problem solving 3
+
+![](./img/2024_07_06_11_07_16.png){width=100%}
+
+## Example: Tomography 1
+
+![](./img/2024_07_06_11_07_33.png){width=100%}
+
+## Example: Tomography 2
+
+![](./img/2024_07_06_11_08_11.png){width=100%}
+
+## Example: Tomography 3
+
+![](./img/2024_07_06_11_08_24.png){width=100%}
+
+## Example: Tomography 4
+
+![](./img/2024_07_06_11_08_49.png){width=100%}
+
+## Example: Tomography 5
+
+![](./img/2024_07_06_11_09_00.png){width=100%}
+
+## Example: Tomography 6
+
+![](./img/2024_07_06_11_09_10.png){width=100%}
+
+## Example: Tomography 7
+
+![](./img/2024_07_06_11_09_23.png){width=100%}
+
+## Example: Tomography 8
+
+![](./img/2024_07_06_11_09_40.png){width=100%}
+
+## Example: Tomography 9
+
+![](./img/2024_07_06_11_09_49.png){width=100%}
+
+## Example: Tomography 10
+
+![](./img/2024_07_06_11_09_58.png){width=100%}
+
+## Example: Tomography 11
+
+![](./img/2024_07_06_11_10_06.png){width=100%}
+
+## Example: Tomography 12
+
+![](./img/2024_07_06_11_10_16.png){width=100%}
+
+## Example: Tomography 13
+
+![](./img/2024_07_06_11_10_27.png){width=100%}
+
+## Example: Tomography 14
+
+![](./img/2024_07_06_11_10_35.png){width=100%}
+
+## Math notation for imaging inverse problems
+
+Linear imaging systems can be described with linear forward operators A and a noise model N.
+
+The operators and are of the form
+
+$y = N(A(x))$
+
+where $x\in\mathcal{X}$ is an image of $n$ pixels, $y\in\mathcal{Y}$ are the measurements of size $m$,
+$A:\mathcal{X}\mapsto\mathcal{Y}$ is a deterministic (linear or non-linear) mapping capturing the physics of the acquisition
+and $N:\mathcal{Y}\mapsto \mathcal{Y}$ is a stochastic mapping which characterizes the noise affecting the measurements.
+
+## Coding imaging inverse problems with DeepInv
+
+The DeepInv package simplifies solving imaging inverse problems with a range of forward models.
+
+```{.python .input}
+physics = dinv.physics.Denoising(dinv.physics.PoissonNoise(0.1))
+
+y = physics(x)
+
+# plot results
+plot([x, y], titles=["signal", "measurement"])
+```
+
+![](./img/sphx_glr_demo_physics_tour_001.png){width=20%}
+
+## Coding imaging inverse problems with DeepInv 2 : Inpainting
+
+```{.python .input}
+sigma = 0.1  # noise level
+physics = dinv.physics.Inpainting(
+    mask=0.5,
+    tensor_size=x.shape[1:],
+    noise_model=dinv.physics.GaussianNoise(sigma=sigma),
+    device=device,
+)
+
+y = physics(x)
+
+# plot results
+plot([x, y], titles=["signal", "measurement"])
+```
+![](./img/sphx_glr_demo_physics_tour_002.png){width=40%}
+
+## Coding imaging inverse problems with DeepInv 2 : Tomography
+
+```{.python .input}
+physics = dinv.physics.Tomography(
+    img_width=img_size[-1],
+    angles=20,
+    device=device,
+    noise_model=dinv.physics.PoissonGaussianNoise(gain=0.1, sigma=0.05),
+)
+
+y = physics(x)
+
+# plot results
+plot(
+    [x, (y - y.min()) / y.max(), physics.A_dagger(y)],
+    titles=["signal", "sinogram", "filtered backprojection"],
+)
+```
+![](./img/sphx_glr_demo_physics_tour_004.png){width=40%}
+
+## Example: Scanning diffraction imaging
+
+See powerpoint
+
+## Summary
+
+* Most imaging physics can be described by linear operators plus a noise model
+
+* The noise model determines the loss function
+
+* The physical forward model determines the measurements
+
+* Examples: tomography, ptychography
+
+* Imaging inverse problems can be solved by gradient descent
+
+* can include prior information with classical contraints directly on the solution, or by neural network learned constraints

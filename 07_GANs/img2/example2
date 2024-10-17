@@ -1,0 +1,58 @@
+# Example 2: Self-Supervised Learning with Generative Adversarial Networks for Electron Microscopy
+
+**Authors:** Bashir Kazimi, Karina Ruzaeva, Stefan Sandfeld  
+**Published in:** CVPR Workshop (2024)  
+**DOI:** [link](https://openaccess.thecvf.com/content/CVPR2024W/CV4MS/papers/Kazimi_Self-Supervised_Learning_with_Generative_Adversarial_Networks_for_Electron_Microscopy_CVPRW_2024_paper.pdf)
+
+
+## Introduction
+
+- **Electron Microscopy (EM)**: Crucial tool in biology, materials science, nanotechnology, and physics.
+- **Challenges**: Limited resolution, time-consuming sample preparation, and need for expert interpretation.
+- **Solution**: Self-supervised learning with GANs for efficient pretraining and fine-tuning on EM datasets.
+
+## Self-Supervised Pretraining
+
+- **Objective**: Learn representations from large unlabeled datasets.
+- **Method**: Use GANs for self-supervised pretraining on CEM500K dataset.
+- **Benefits**:
+  - Facilitates efficient fine-tuning.
+  - Reduces dependency on large annotated datasets.
+  - Enhances performance in various downstream tasks.
+
+## GAN Architecture
+
+- **Pix2Pix Model**:
+  - Conditional GAN for image-to-image translation.
+  - Generator and discriminator trained in adversarial manner.
+  - Pretrained on CEM500K dataset to generate realistic EM images.
+- **Training Details**:
+  - Different U-Net architectures and HRNet used as generators.
+  - Pretrained on 50K, 100K, and 200K images.
+
+## Downstream Tasks
+
+- **Semantic Segmentation**:
+  - Fine-tuning on high-resolution TEM images of Gold nanoparticles.
+- **Denoising**:
+  - Removing noise from atomic-scale STEM images.
+- **Super-Resolution**:
+  - Enhancing resolution of TEM images.
+- **Noise & Background Removal**:
+  - Improving image quality by removing background artifacts.
+
+## Results and Comparisons
+
+- **Semantic Segmentation**:
+  - Pretrained models outperform randomly initialized models.
+  - Smaller, fine-tuned models perform better than larger, randomly initialized ones.
+- **Denoising and Super-Resolution**:
+  - Fine-tuned HRNet models show lower validation loss and better performance.
+  - Faster convergence with pretraining.
+
+## Conclusion
+
+- Self-supervised pretraining with GANs significantly improves performance in EM tasks.
+- Pretrained models achieve faster convergence and higher predictive power.
+- Efficient for domains with limited annotated data.
+- Future work: Explore alternative self-supervised methods like contrastive learning.
