@@ -37,5 +37,5 @@ def extract_images_from_pptx(pptx_file_path, save_folder):
 
 # Example usage
 pptx_file_path = r'C:\\Users\\braun\\Insync\\braunphil@gmail.com\\Google Drive\\erlangen\\lecture\\SS24\\DataScience for EM\\06_convnets.pptx'
-save_folder = r'C:\\Users\\braun\\OneDrive\\Documents\\GitHub\\SS24_DataScienceForEM2\\04_CNN\\img'
+save_folder = r'C:\\Users\\braun\\OneDrive\\Documents\\GitHub\\WS24_DataScienceForEM2\\04_CNN\\img'
 extract_images_from_pptx(pptx_file_path, save_folder)

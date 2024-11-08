@@ -4,7 +4,7 @@ format:
     theme: "night" #["theme/q-theme.scss"]
     slide-number: c/t
     logo: "eclipse_logo_small.png"
-    footer: "[SS24_DataScienceForEM](https://github.com/ECLIPSE-Lab/SS24_DataScienceForEM)"
+    footer: "[WS24_DataScienceForEM](https://github.com/ECLIPSE-Lab/WS24_DataScienceForEM)"
     code-copy: true
     center-title-slide: false
     include-in-header: heading-meta.html
@@ -29,7 +29,7 @@ execute:
 <h3> 2024-01-09 </h3>
 <br>
 
-<h3>  &nbsp; [https://github.com/ECLIPSE-Lab/SS24_DataScienceForEM](https://github.com/ECLIPSE-Lab/SS24_DataScienceForEM)
+<h3>  &nbsp; [https://github.com/ECLIPSE-Lab/WS24_DataScienceForEM](https://github.com/ECLIPSE-Lab/WS24_DataScienceForEM)
 
 ## Introduction to Gaussian Processes 1
 
