@@ -34,7 +34,7 @@ jupyter: python3
 <h3>  &nbsp; [https://github.com/ECLIPSE-Lab/WS24_DataScienceForEM](https://github.com/ECLIPSE-Lab/WS24_DataScienceForEM)
 </h3>
 
-## Load Python modules
+## Load Python modules and Chemical Images
 
 ```{python}
 from scipy.sparse import spdiags
@@ -43,13 +43,14 @@ import fusion_utils as utils
 from tqdm import tqdm 
 import numpy as np
 import h5py
-# import sys
-# raise RuntimeError(sys.executable)
-```
+import torch as th
+import kornia
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
 
 ## Load Chemical Maps 
 
-```{python}
 fname = 'CoSX_maps.h5'; mapNum = 'map7/'
 
 # Parse Chemical Maps
@@ -60,140 +61,155 @@ file = h5py.File(fname, 'r')
 
 print('Available EDX Maps: ', list(file))
 
-xx = np.array([],dtype=np.float32)
+x = []
 for ee in elementList:
-
 	# Read Chemical Map for Element "ee"
 	edsMap = file[mapNum+ee][:,:]
-
 	# Set Noise Floor to Zero and Normalize Chemical Maps
 	edsMap -= np.min(edsMap); edsMap /= np.max(edsMap)
-
 	# Concatenate Chemical Map to Variable of Interest
-	xx = np.concatenate([xx,edsMap.flatten()])
+	x.append(edsMap)
+x0 = np.stack(x)
+print(f'x0 shape {x0.shape}')
 
-# Make Copy of Raw Measurements for Poisson Maximum Likelihood Term 
-xx0 = xx.copy()
 ```
 
-## Parse Meta Data, Prepare Reconstruction and Display Raw Chemical Maps
-
+## Define the Total Variation Denoiser
 ```{python}
 # Image Dimensions
-(nx, ny) = edsMap.shape; nPix = nx * ny
-nz = len(elementList); lambdaHAADF = 1/nz
+(nx, ny) = edsMap.shape
+nPix = nx * ny
+nz = len(elementList)
+lambdaHAADF = 1/nz
 
-import torch
-import kornia
-import cv2
-import numpy as np
 
-import matplotlib.pyplot as plt
-class TVDenoise(torch.nn.Module):
+class TVDenoise(th.nn.Module):
     def __init__(self, noisy_image, lambdaTV):
         super(TVDenoise, self).__init__()
         self.lambdaTV = lambdaTV
-        self.l2_term = torch.nn.MSELoss(reduction='mean')
+        self.l2_term = th.nn.MSELoss(reduction='mean')
         self.regularization_term = kornia.losses.TotalVariation()
         # create the variable which will be optimized to produce the noise free image
-        self.clean_image = torch.nn.Parameter(data=noisy_image.clone(), requires_grad=True)
+        self.clean_image = th.nn.Parameter(data=noisy_image.clone(), requires_grad=True)
         self.noisy_image = noisy_image
 
     def forward(self):
-        return self.l2_term(self.clean_image, self.noisy_image) + lambdaTV * self.regularization_term(self.clean_image)
+        return self.l2_term(self.clean_image, self.noisy_image) + self.lambdaTV * self.regularization_term(self.clean_image)
 
     def get_clean_image(self):
         return self.clean_image
 
-def reg(x, lambda_TV, ng):
+def denoise_total_variation(x, lambda_TV, ng):
   # read the image with OpenCV
   img = x
   # convert to torch tensor
-  noisy_image: torch.tensor = kornia.image_to_tensor(img).squeeze()  # CxHxW
+  noisy_image = img
   # define the total variation denoising network
   tv_denoiser = TVDenoise(noisy_image, lambda_TV)
   # define the optimizer to optimize the 1 parameter of tv_denoiser
-  optimizer = torch.optim.SGD(tv_denoiser.parameters(), lr=0.1, momentum=0.9)
+  optimizer = th.optim.SGD(tv_denoiser.parameters(), lr=0.1, momentum=0.9)
   # run the optimization loop
   for i in range(ng):
       optimizer.zero_grad()
       loss = tv_denoiser()
-      # if i % 25 == 0:
-      #     print("Loss in iteration {} of {}: {:.3f}".format(i, ng, loss.item()))
       loss.backward()
       optimizer.step()
   # convert back to numpy
   img_clean: np.ndarray = kornia.tensor_to_image(tv_denoiser.get_clean_image())
   return img_clean, loss.item()
 
-# HAADF Signal (Measurements)
-b = file[mapNum+'HAADF'][:].flatten()
 
+```
+## Let's test the Total Variation regularization
+
+```{python}
+lambda_TV = 5e-2
+ng = 40
+
+device = 'cuda'
+x0 = th.as_tensor(x0).to(device)
+x0_den, loss0 = denoise_total_variation(x0[0], lambda_TV, ng)
+x1_den, loss1 = denoise_total_variation(x0[1], lambda_TV, ng)
+x2_den, loss2 = denoise_total_variation(x0[2], lambda_TV, ng)
+fig, ax = plt.subplots(3,2, figsize=(10,15))
+axs = ax.ravel()
+title_list = ['x_0','x_0 denoised','x_1','x_1 denoised','x_2','x_2 denoised']
+for axi, xi, li in zip(axs, [x[0],x0_den,x[1],x1_den,x[2],x2_den], title_list):
+  axi.imshow(xi, cmap='bone')
+  axi.set_xticks([])
+  axi.set_yticks([])
+  axi.set_title(li) 
+
+```
+
+```{python}
+# HAADF Signal (Measurements)
+b = file[mapNum+'HAADF'] 
 # Data Subtraction and Normalization 
 b -= np.min(b); b /= np.max(b)
 
-# Create Summation Matrix
-A = utils.create_measurement_matrix(nx,ny,nz)
-
-
-```
-```{python}
-# Show Raw Data
-utils.plot_elemental_images(xx, b, elementList, nx, ny, 2,2)
-```
-
-## Plot Regularization
-```{python}
-regularize = True; ng = 15; lambdaTV = 0.1; 
-r, cost = reg(edsMap, lambdaTV, ng)
-
-import matplotlib.pyplot as plt 
 fig, ax = plt.subplots()
-ax.imshow(r)
+ax.imshow(b)
+ax.set_xticks([])
+ax.set_yticks([])
+ax.set_title('HAADF image') 
 plt.show()
-
 ```
 
 ## Perform Multi-Modal Data Fusion
-
 
 ```{python}
 # Convergence Parameters
 gamma = 1.6; lambdaEDS = 5e-6; nIter = 30; bkg = 1e-1
 
 # TV Min Parameters
-regularize = True; ng = 15; lambdaTV = 0.1; 
+regularize = True
+ng = 15
+lambdaTV = 0.1; 
 
-# Auxiliary Functions
-lsqFun = lambda inData : 0.5 * np.linalg.norm(A.dot(inData**gamma) - b) **2
-poissonFun = lambda inData : np.sum(xx0 * np.log(inData + 1e-8) - inData)
+fusion_loss = th.nn.MSELoss() 
+noise_loss = th.nn.PoissonNLLLoss(log_input=False, eps=1e-1)
+
+#create arrays to store the loss function
+costHAADF = np.zeros(nIter,dtype=np.float32)
+costEDS = np.zeros(nIter, dtype=np.float32)
+costTV = np.zeros(nIter, dtype=np.float32);
+
+
+x0 = th.as_tensor(x0).to(device)
+b = th.as_tensor(b).to(device)
+x = th.clone(x0).to(device)
+x.requires_grad_(True)
+
+optimizer = th.optim.SGD([x], lr=1)
 
 # Main Loop
-costHAADF = np.zeros(nIter,dtype=np.float32); costEDS = np.zeros(nIter, dtype=np.float32); costTV = np.zeros(nIter, dtype=np.float32);
 for kk in tqdm(range(nIter)):
+  optimizer.zero_grad()
+  loss1 = lambdaHAADF * fusion_loss(b, th.sum(x**gamma,0))
+  loss2 = lambdaEDS * noise_loss(x,x0)
+  loss = loss1 + loss2 
 
-	# HAADF Update
-	xx -=  gamma * spdiags(xx**(gamma - 1), [0], nz*nx*ny, nz*nx*ny) * lambdaHAADF * A.transpose() * (A.dot(xx**gamma) - b) \
-			+ lambdaEDS * (1 - xx0 / (xx + bkg))
-	xx[xx<0] = 0
+  loss.backward()
+  optimizer.step()
+
+    # Measure Cost Function
+  costHAADF[kk] = loss1.item()
+  costEDS[kk] = loss2.item()
+
+  with th.no_grad():
+    x[x<0] = 0
 
 	# Regularization 
-	if regularize:
-		for zz in range(nz):
-			w, cost = reg( xx[zz*nPix:(zz+1)*nPix].reshape(ny,nx), lambdaTV, ng)
-			xx[zz*nPix:(zz+1)*nPix] = w.reshape((nPix,))
+    if regularize:
+      x0_den, loss0 = denoise_total_variation(x[0], lambda_TV, ng)
+      x1_den, loss1 = denoise_total_variation(x[1], lambda_TV, ng)
+      x2_den, loss2 = denoise_total_variation(x[2], lambda_TV, ng)
+      x[0, ...] = th.as_tensor(x0_den)
+      x[1, ...] = th.as_tensor(x1_den)
+      x[2, ...] = th.as_tensor(x2_den)    
 
-	# Measure Cost Function
-	costHAADF[kk] = lsqFun(xx); costEDS[kk] = poissonFun(xx)
-
-	# Measure Isotropic TV 
-	if regularize:
-		for zz in range(nz):
-			w, cost = reg( xx[zz*nPix:(zz+1)*nPix].reshape(ny,nx), lambdaTV, ng)
-			costTV[kk] += cost 
-
-
-
+      costTV[kk] = loss0 + loss1 + loss2
 
 ```
 ## Show Reconstructed Signal
