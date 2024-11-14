@@ -37,17 +37,26 @@ jupyter: python3
 ## Load Python modules and Chemical Images
 
 ```{python}
-from scipy.sparse import spdiags
-import matplotlib.pyplot as plt
-import fusion_utils as utils
-from tqdm import tqdm 
+# Standard libraries
+import math
 import numpy as np
+from tqdm import tqdm
+
+# Data handling
 import h5py
+
+# Deep learning
 import torch as th
 import kornia
+
+# Image processing
 import cv2
-import numpy as np
+
+# Visualization
 import matplotlib.pyplot as plt
+
+# Local utilities
+import fusion_utils as utils
 
 ## Load Chemical Maps 
 
@@ -74,16 +83,30 @@ print(f'x0 shape {x0.shape}')
 
 ```
 
-## Define the Total Variation Denoiser
+## Define the Total Variation Denoiser Module
 ```{python}
-# Image Dimensions
-(nx, ny) = edsMap.shape
-nPix = nx * ny
-nz = len(elementList)
-lambdaHAADF = 1/nz
-
-
 class TVDenoise(th.nn.Module):
+    """Total variation denoising implemented as a neural network module.
+
+    This class implements an optimization-based denoising approach that minimizes
+    a combination of:
+    1) Mean squared error between the clean and noisy images
+    2) Total variation of the clean image weighted by lambdaTV
+
+    Parameters
+    ----------
+    noisy_image : torch.Tensor
+        The input noisy image to be denoised
+    lambdaTV : float
+        Weight coefficient for the total variation regularization term
+
+    Methods
+    -------
+    forward()
+        Computes the combined loss: MSE(clean, noisy) + lambdaTV * TV(clean)
+    get_clean_image()
+        Returns the optimized clean image tensor
+    """
     def __init__(self, noisy_image, lambdaTV):
         super(TVDenoise, self).__init__()
         self.lambdaTV = lambdaTV
@@ -98,8 +121,34 @@ class TVDenoise(th.nn.Module):
 
     def get_clean_image(self):
         return self.clean_image
+```
+
+## Define the Total Variation Denoising Function
+```{python}
+
 
 def denoise_total_variation(x, lambda_TV, ng):
+  """Denoise an image using total variation regularization.
+
+  This function takes a noisy image and performs total variation denoising by optimizing
+  a combination of mean squared error and total variation regularization terms.
+
+  Parameters
+  ----------
+  x : torch.Tensor
+      Input noisy image tensor to be denoised
+  lambda_TV : float 
+      Weight coefficient for the total variation regularization term
+  ng : int
+      Number of gradient descent iterations to run the optimization
+
+  Returns
+  -------
+  tuple
+      A tuple containing:
+      - numpy.ndarray: The denoised image
+      - float: The final loss value after optimization
+  """
   # read the image with OpenCV
   img = x
   # convert to torch tensor
@@ -117,10 +166,9 @@ def denoise_total_variation(x, lambda_TV, ng):
   # convert back to numpy
   img_clean: np.ndarray = kornia.tensor_to_image(tv_denoiser.get_clean_image())
   return img_clean, loss.item()
-
-
 ```
-## Let's test the Total Variation regularization
+
+## Denoise the Chemical Maps with Total Variation Regularization Only
 
 ```{python}
 lambda_TV = 5e-2
@@ -142,6 +190,7 @@ for axi, xi, li in zip(axs, [x[0],x0_den,x[1],x1_den,x[2],x2_den], title_list):
 
 ```
 
+## Load the HAADF Signal
 ```{python}
 # HAADF Signal (Measurements)
 b = file[mapNum+'HAADF'] 
@@ -160,15 +209,26 @@ plt.show()
 
 ```{python}
 # Convergence Parameters
-gamma = 1.6; lambdaEDS = 5e-6; nIter = 30; bkg = 1e-1
+gamma = 1.6
+
+nIter = 20
+bkg = 1e-3
 
 # TV Min Parameters
 regularize = True
 ng = 15
-lambdaTV = 0.1; 
 
-fusion_loss = th.nn.MSELoss() 
-noise_loss = th.nn.PoissonNLLLoss(log_input=False, eps=1e-1)
+# Image Dimensions
+(nx, ny) = edsMap.shape
+nPix = nx * ny
+nz = len(elementList)
+lambdaHAADF = 8e-2
+lambdaEDS = 1e-3
+lambdaTV = 5e-3
+
+fusion_loss = th.nn.MSELoss(reduction='sum') 
+noise_loss = th.nn.PoissonNLLLoss(log_input=False, eps=bkg, reduction='sum')
+# noise_loss = th.nn.MSELoss() 
 
 #create arrays to store the loss function
 costHAADF = np.zeros(nIter,dtype=np.float32)
@@ -176,49 +236,105 @@ costEDS = np.zeros(nIter, dtype=np.float32)
 costTV = np.zeros(nIter, dtype=np.float32);
 
 
-x0 = th.as_tensor(x0).to(device)
-b = th.as_tensor(b).to(device)
-x = th.clone(x0).to(device)
-x.requires_grad_(True)
+x0 = th.as_tensor(x0, dtype=th.float32).to(device)
+b = th.as_tensor(b, dtype=th.float32).to(device)
+x = th.nn.Parameter(th.clone(x0)).to(device)
 
 optimizer = th.optim.SGD([x], lr=1)
 
 # Main Loop
 for kk in tqdm(range(nIter)):
-  optimizer.zero_grad()
-  loss1 = lambdaHAADF * fusion_loss(b, th.sum(x**gamma,0))
-  loss2 = lambdaEDS * noise_loss(x,x0)
-  loss = loss1 + loss2 
-
-  loss.backward()
-  optimizer.step()
+    optimizer.zero_grad()
+    # Add small epsilon to prevent numerical instability
+    eps = 1e-8
+    # Clip x values to prevent extreme values
+    with th.no_grad():
+        x.clamp_(min=eps)
+    
+    # More stable power operation
+    powered_sum = th.pow(x[0] + eps, gamma) + th.pow(x[1] + eps, gamma) + th.pow(x[2] + eps, gamma)
+    loss1 = lambdaHAADF * fusion_loss(powered_sum, b)
+    loss2 = lambdaEDS * noise_loss(x, x0)
+    loss = loss1 + loss2 
+    
+    loss.backward()
+    optimizer.step()
+    
+    # Clamp values after optimization step
+    with th.no_grad():
+        x.clamp_(min=eps)
 
     # Measure Cost Function
-  costHAADF[kk] = loss1.item()
-  costEDS[kk] = loss2.item()
+    costHAADF[kk] = loss1.item()
+    costEDS[kk] = loss2.item()
 
-  with th.no_grad():
-    x[x<0] = 0
+    with th.no_grad():
+        x[x<0] = 1e-2
 
-	# Regularization 
+    # Regularization 
     if regularize:
-      x0_den, loss0 = denoise_total_variation(x[0], lambda_TV, ng)
-      x1_den, loss1 = denoise_total_variation(x[1], lambda_TV, ng)
-      x2_den, loss2 = denoise_total_variation(x[2], lambda_TV, ng)
-      x[0, ...] = th.as_tensor(x0_den)
-      x[1, ...] = th.as_tensor(x1_den)
-      x[2, ...] = th.as_tensor(x2_den)    
+      # print(f"2 Number of NaN elements in x: {th.isnan(x).sum().item()}")
+      
+      x0_den, loss0 = denoise_total_variation(x[0].detach(), lambda_TV, ng)
+      x1_den, loss1 = denoise_total_variation(x[1].detach(), lambda_TV, ng)
+      x2_den, loss2 = denoise_total_variation(x[2].detach(), lambda_TV, ng)
+      # print(f"3 Number of NaN elements in x: {th.isnan(x).sum().item()}")
+
+
+      with th.no_grad():
+        x[0, ...] = th.as_tensor(x0_den)
+        x[1, ...] = th.as_tensor(x1_den)
+        x[2, ...] = th.as_tensor(x2_den)   
+        # x[x==0] = 1e-2 
+
+      
 
       costTV[kk] = loss0 + loss1 + loss2
 
+fig, axes = plt.subplots(2, 3, figsize=(12,8))
+plt.suptitle(f'λHAADF={lambdaHAADF}, λEDS={lambdaEDS}, λTV={lambdaTV}')
+# Plot original data (x0)
+for i in range(3):
+    axes[0,i].imshow(x0[i].cpu().detach().numpy().reshape(nx,ny), cmap='gray')
+    axes[0,i].set_title(f'Original - Element {i+1}')
+    axes[0,i].axis('off')
+
+# Plot reconstructed data (x) 
+for i in range(3):
+    axes[1,i].imshow(x[i].data.cpu().detach().numpy(), cmap='gray')
+    axes[1,i].set_title(f'Reconstructed - Element {i+1}')
+    axes[1,i].axis('off')
+
+plt.tight_layout()
+plt.show()
+utils.plot_convergence(costHAADF, lambdaHAADF, costEDS, lambdaEDS, costTV, lambdaTV)
 ```
-## Show Reconstructed Signal
 ```{python}
 
-utils.plot_elemental_images(xx,A.dot(xx**gamma),elementList,nx,ny,2,2)
+x.max(), x.min()
 ```
 ## Display Cost Functions and Descent Parameters
 ```{python}
 
 utils.plot_convergence(costHAADF, lambdaHAADF, costEDS, lambdaEDS, costTV, lambdaTV)
+```
+## Show Reconstructed Signal
+```{python}
+fig, axes = plt.subplots(2, 3, figsize=(12,8))
+plt.suptitle(f'λHAADF={lambdaHAADF}, λEDS={lambdaEDS}, λTV={lambdaTV}')
+# Plot original data (x0)
+for i in range(3):
+    axes[0,i].imshow(x0[i].cpu().detach().numpy().reshape(nx,ny), cmap='gray')
+    axes[0,i].set_title(f'Original - Element {i+1}')
+    axes[0,i].axis('off')
+
+# Plot reconstructed data (x) 
+for i in range(3):
+    axes[1,i].imshow(x[i].cpu().detach().numpy().reshape(nx,ny), cmap='gray')
+    axes[1,i].set_title(f'Reconstructed - Element {i+1}')
+    axes[1,i].axis('off')
+
+plt.tight_layout()
+plt.show()
+
 ```
