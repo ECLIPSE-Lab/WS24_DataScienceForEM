@@ -95,6 +95,12 @@
     code span.wa { color: #d4d0ab; font-style: italic; } /* Warning */
   </style>
   <link rel="stylesheet" href="04_convnets_0_files/libs/revealjs/dist/theme/quarto.css">
+  <link rel="stylesheet" href=".reveal {
+  background-color: #2a2a2a;  /* Slightly lighter than default night theme */
+}
+.reveal .slides {
+  background-color: #2a2a2a;
+}">
   <link href="04_convnets_0_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
   <link href="04_convnets_0_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
   <link href="04_convnets_0_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
@@ -404,7 +410,13 @@
   <div class="reveal">
     <div class="slides">
 
+<section id="title-slide" class="quarto-title-block">
+  <h1 class="title">The Cross-Correlation Operation</h1>
 
+<div class="quarto-title-authors">
+</div>
+
+</section>
 <section id="convolutional-neural-networks-0" class="slide level2">
 <h2>Convolutional Neural Networks 0</h2>
 <br>
@@ -427,49 +439,19 @@ Philipp Pelz
 <h2>From Fully Connected Layers to Convolutions</h2>
 <p>:label:<code>sec_why-conv</code></p>
 <ul>
-<li>models that we have discussed so far remain appropriate options when we are dealing with tabular data.</li>
-<li>tabular: data consist of rows corresponding to examples and columns corresponding to features.</li>
-<li>With tabular data, we might anticipate that the patterns we seek could involve interactions among the features, but we do not assume any structure <em>a priori</em> concerning how the features interact.</li>
-<li>no prior knowledge about structure of data –&gt; MLP</li>
-<li>for high-dimensional perceptual data, structure-less networks can grow unwieldy.</li>
+<li>MLPs work well for tabular data but become impractical for high-dimensional perceptual data like images</li>
+<li>For a one-megapixel image, even with dimension reduction to 1000 hidden units, a fully connected layer would require <span class="math inline">\(10^6 \times 10^3 = 10^9\)</span> parameters</li>
+<li>Images have rich structure that can be exploited through Convolutional Neural Networks (CNNs)</li>
 </ul>
-</section>
-<section class="slide level2">
-
+<p>Three key principles guide CNN design: 1. <strong>Translation Invariance</strong>: The network should respond similarly to patterns regardless of their location 2. <strong>Locality</strong>: Early layers should focus on local regions, not the entire image 3. <strong>Hierarchy</strong>: Deeper layers should capture longer-range features</p>
+<p>These principles allow CNNs to efficiently process visual information while dramatically reducing the number of parameters compared to fully connected networks. ## Invariance</p>
 <ul>
-<li>let’s return to our running exampleof distinguishing cats from dogs.</li>
-<li>Say that we do a thorough job in data collection, collecting an annotated dataset of one-megapixel photographs.</li>
-<li><span class="math inline">\(\rightarrow\)</span> each input to the network has one million dimensions.</li>
-<li>aggressive reduction to one thousand hidden dimensions <span class="math inline">\(\rightarrow\)</span> fully connected layer with <span class="math inline">\(10^6 \times 10^3 = 10^9\)</span> parameters.</li>
-<li>one megapixel resolution may not be necessary</li>
-</ul>
-</section>
-<section class="slide level2">
-
-<ul>
-<li>might be able to get away with one hundred thousand pixels, our hidden layer of size 1000 grossly underestimates the number of hidden units that it takes to learn good representations of images <span class="math inline">\(\rightarrow\)</span> practical system will still require billions of parameters.</li>
-<li>learning a classifier by fitting so many parameters might require collecting an enormous dataset.</li>
-<li>images exhibit rich structure that can be exploited.</li>
-<li>Convolutional neural networks (CNNs) are one way for exploiting some of the known structure in natural images.</li>
-</ul>
-</section>
-<section id="invariance" class="slide level2">
-<h2>Invariance</h2>
-<ul>
-<li>want to detect an object in an image.</li>
-<li>seems reasonable that whatever method we use to recognize objects should not be overly concerned with the precise location of the object in the image.</li>
-<li>system should exploit this knowledge. Pigs usually do not fly and planes usually do not swim. Nonetheless, we should still recognize a pig were one to appear at the top of the image.</li>
-<li>We can draw some inspiration here from the children’s game “Where’s Waldo” (depicted in :numref:<code>img_waldo</code>).</li>
-<li>The game consists of a number of chaotic scenes bursting with activities.</li>
-</ul>
-</section>
-<section class="slide level2">
-
-<ul>
-<li>Waldo shows up somewhere in each, typically lurking in some unlikely location. The reader’s goal is to locate him. Despite his characteristic outfit, this can be surprisingly difficult, due to the large number of distractions.</li>
-<li>However, <em>what Waldo looks like</em> does not depend upon <em>where Waldo is located</em>. We could sweep the image with a Waldo detector that could assign a score to each patch, indicating the likelihood that the patch contains Waldo.</li>
-<li>In fact, many object detection and segmentation algorithms are based on this approach :cite:<code>Long.Shelhamer.Darrell.2015</code>.</li>
-<li>CNNs systematize this idea of <em>spatial invariance</em>, exploiting it to learn useful representations with fewer parameters.</li>
+<li>When detecting objects in images, the recognition method should not be overly dependent on the precise location of the object</li>
+<li>This concept can be illustrated through the children’s game “Where’s Waldo” (depicted in :numref:<code>img_waldo</code>)</li>
+<li><em>What Waldo looks like</em> does not depend upon <em>where Waldo is located</em></li>
+<li>We could sweep the image with a Waldo detector that assigns a score to each patch, indicating the likelihood of containing Waldo</li>
+<li>Many object detection and segmentation algorithms are based on this approach :cite:<code>Long.Shelhamer.Darrell.2015</code></li>
+<li>CNNs systematize this idea of <em>spatial invariance</em>, exploiting it to learn useful representations with fewer parameters</li>
 </ul>
 </section>
 <section class="slide level2">
@@ -493,29 +475,15 @@ Philipp Pelz
 <section id="constraining-the-mlp" class="slide level2">
 <h2>Constraining the MLP</h2>
 <ul>
-<li><p>To start off, we can consider an MLP with two-dimensional images <span class="math inline">\(\mathbf{X}\)</span> as inputs and their immediate hidden representations <span class="math inline">\(\mathbf{H}\)</span> similarly represented as matrices (they are two-dimensional tensors in code), where both <span class="math inline">\(\mathbf{X}\)</span> and <span class="math inline">\(\mathbf{H}\)</span> have the same shape.</p></li>
-<li><p>Let that sink in. We now conceive of not only the inputs but also the hidden representations as possessing spatial structure.</p></li>
-<li><p>Let <span class="math inline">\([\mathbf{X}]_{i, j}\)</span> and <span class="math inline">\([\mathbf{H}]_{i, j}\)</span> denote the pixel at location <span class="math inline">\((i,j)\)</span> in the input image and hidden representation, respectively.</p></li>
-</ul>
-</section>
-<section class="slide level2">
-
-<ul>
-<li>Consequently, to have each of the hidden units receive input from each of the input pixels, we would switch from using weight matrices (as we did previously in MLPs) to representing our parameters as fourth-order weight tensors <span class="math inline">\(\mathsf{W}\)</span>.</li>
-<li>Suppose that <span class="math inline">\(\mathbf{U}\)</span> contains biases, we could formally express the fully connected layer as</li>
+<li>Consider an MLP with two-dimensional images <span class="math inline">\(\mathbf{X}\)</span> as inputs and their immediate hidden representations <span class="math inline">\(\mathbf{H}\)</span> similarly represented as matrices, where both <span class="math inline">\(\mathbf{X}\)</span> and <span class="math inline">\(\mathbf{H}\)</span> have the same shape</li>
+<li>Let <span class="math inline">\([\mathbf{X}]_{i, j}\)</span> and <span class="math inline">\([\mathbf{H}]_{i, j}\)</span> denote the pixel at location <span class="math inline">\((i,j)\)</span> in the input image and hidden representation, respectively</li>
+<li>To have each hidden unit receive input from each input pixel, we use fourth-order weight tensors <span class="math inline">\(\mathsf{W}\)</span></li>
+<li>With biases <span class="math inline">\(\mathbf{U}\)</span>, we can express the fully connected layer as:</li>
 </ul>
 <p><span class="math display">\[\begin{aligned} \left[\mathbf{H}\right]_{i, j} &amp;= [\mathbf{U}]_{i, j} + \sum_k \sum_l[\mathsf{W}]_{i, j, k, l}  [\mathbf{X}]_{k, l}\\ &amp;=  [\mathbf{U}]_{i, j} +
 \sum_a \sum_b [\mathsf{V}]_{i, j, a, b}  [\mathbf{X}]_{i+a, j+b}.\end{aligned}\]</span></p>
 <ul>
-<li>switch from <span class="math inline">\(\mathsf{W}\)</span> to <span class="math inline">\(\mathsf{V}\)</span> is entirely cosmetic for now since there is a one-to-one correspondence between coefficients in both fourth-order tensors.</li>
-</ul>
-</section>
-<section class="slide level2">
-
-<ul>
-<li>We simply re-index the subscripts <span class="math inline">\((k, l)\)</span> such that <span class="math inline">\(k = i+a\)</span> and <span class="math inline">\(l = j+b\)</span>. In other words, we set <span class="math inline">\([\mathsf{V}]_{i, j, a, b} = [\mathsf{W}]_{i, j, i+a, j+b}\)</span>.</li>
-<li>The indices <span class="math inline">\(a\)</span> and <span class="math inline">\(b\)</span> run over both positive and negative offsets, covering the entire image. For any given location (<span class="math inline">\(i\)</span>, <span class="math inline">\(j\)</span>) in the hidden representation <span class="math inline">\([\mathbf{H}]_{i, j}\)</span>, we compute its value by summing over pixels in <span class="math inline">\(x\)</span>, centered around <span class="math inline">\((i, j)\)</span> and weighted by <span class="math inline">\([\mathsf{V}]_{i, j, a, b}\)</span>.</li>
-<li>Before we carry on, let’s consider the total number of parameters required for a <em>single</em> layer in this parametrization: a <span class="math inline">\(1000 \times 1000\)</span> image (1 megapixel) is mapped to a <span class="math inline">\(1000 \times 1000\)</span> hidden representation. This requires <span class="math inline">\(10^{12}\)</span> parameters, far beyond what computers currently can handle.</li>
+<li>For a <span class="math inline">\(1000 \times 1000\)</span> image mapped to a <span class="math inline">\(1000 \times 1000\)</span> hidden representation, this requires <span class="math inline">\(10^{12}\)</span> parameters, far beyond current computational capabilities</li>
 </ul>
 </section>
 <section id="translation-invariance" class="slide level2">
@@ -527,38 +495,19 @@ Philipp Pelz
 <li>As a result, we can simplify the definition for <span class="math inline">\(\mathbf{H}\)</span>:</li>
 </ul>
 <p><span class="math display">\[[\mathbf{H}]_{i, j} = u + \sum_a\sum_b [\mathbf{V}]_{a, b}  [\mathbf{X}]_{i+a, j+b}.\]</span></p>
-</section>
-<section class="slide level2">
-
 <ul>
 <li>This is a <em>convolution</em>! We are effectively weighting pixels at <span class="math inline">\((i+a, j+b)\)</span> in the vicinity of location <span class="math inline">\((i, j)\)</span> with coefficients <span class="math inline">\([\mathbf{V}]_{a, b}\)</span> to obtain the value <span class="math inline">\([\mathbf{H}]_{i, j}\)</span>.</li>
-<li>Note that <span class="math inline">\([\mathbf{V}]_{a, b}\)</span> needs many fewer coefficients than <span class="math inline">\([\mathsf{V}]_{i, j, a, b}\)</span> since it no longer depends on the location within the image. Consequently, the number of parameters required is no longer <span class="math inline">\(10^{12}\)</span> but a much more reasonable <span class="math inline">\(4 \cdot 10^6\)</span>: we still have the dependency on <span class="math inline">\(a, b \in (-1000, 1000)\)</span>.</li>
-<li>In short, we have made significant progress. Time-delay neural networks (TDNNs) are some of the first examples to exploit this idea :cite:<code>Waibel.Hanazawa.Hinton.ea.1989</code>.</li>
+<li>Note that <span class="math inline">\([\mathbf{V}]_{a, b}\)</span> needs many fewer coefficients than <span class="math inline">\([\mathsf{V}]_{i, j, a, b}\)</span> since it no longer depends on the location within the image. The number of parameters required is reduced from <span class="math inline">\(10^{12}\)</span> to <span class="math inline">\(4 \cdot 10^6\)</span>.</li>
 </ul>
 </section>
 <section id="locality" class="slide level2">
 <h2>Locality</h2>
 <ul>
-<li>Now let’s invoke the second principle: locality. As motivated above, we believe that we should not have to look very far away from location <span class="math inline">\((i, j)\)</span> in order to glean relevant information to assess what is going on at <span class="math inline">\([\mathbf{H}]_{i, j}\)</span>.</li>
-<li>This means that outside some range <span class="math inline">\(|a|&gt; \Delta\)</span> or <span class="math inline">\(|b| &gt; \Delta\)</span>, we should set <span class="math inline">\([\mathbf{V}]_{a, b} = 0\)</span>.</li>
-<li>Equivalently, we can rewrite <span class="math inline">\([\mathbf{H}]_{i, j}\)</span> as <span class="math display">\[[\mathbf{H}]_{i, j} = u + \sum_{a = -\Delta}^{\Delta} \sum_{b = -\Delta}^{\Delta} [\mathbf{V}]_{a, b}  [\mathbf{X}]_{i+a, j+b}.\]</span> :eqlabel:<code>eq_conv-layer</code></li>
-</ul>
-</section>
-<section class="slide level2">
-
-<ul>
-<li>This reduces the number of parameters from <span class="math inline">\(4 \cdot 10^6\)</span> to <span class="math inline">\(4 \Delta^2\)</span>, where <span class="math inline">\(\Delta\)</span> is typically smaller than <span class="math inline">\(10\)</span>. As such, we reduced the number of parameters by another 4 orders of magnitude. Note that :eqref:<code>eq_conv-layer</code>, in a nutshell, is what is called a <em>convolutional layer</em>.</li>
-<li><em>Convolutional neural networks</em> (CNNs) are a special family of neural networks that contain convolutional layers. In the deep learning research community, <span class="math inline">\(\mathbf{V}\)</span> is referred to as a <em>convolution kernel</em>, a <em>filter</em>, or simply the layer’s <em>weights</em> that are learnable parameters.</li>
-</ul>
-</section>
-<section class="slide level2">
-
-<ul>
-<li>While previously, we might have required billions of parameters to represent just a single layer in an image-processing network, we now typically need just a few hundred, without altering the dimensionality of either the inputs or the hidden representations.</li>
-<li>The price paid for this drastic reduction in parameters is that our features are now translation invariant and that our layer can only incorporate local information, when determining the value of each hidden activation.</li>
-<li>All learning depends on imposing inductive bias. When that bias agrees with reality, we get sample-efficient models that generalize well to unseen data.</li>
-<li>But of course, if those biases do not agree with reality, e.g., if images turned out not to be translation invariant, our models might struggle even to fit our training data.</li>
-<li>This dramatic reduction in parameters brings us to our last desideratum, namely that deeper layers should represent larger and more complex aspects of an image. This can be achieved by interleaving nonlinearities and convolutional layers repeatedly.</li>
+<li><p>Now let’s invoke the second principle: locality. We believe that we should not have to look very far away from location <span class="math inline">\((i, j)\)</span> to assess what is going on at <span class="math inline">\([\mathbf{H}]_{i, j}\)</span>.</p></li>
+<li><p>This means that outside some range <span class="math inline">\(|a|&gt; \Delta\)</span> or <span class="math inline">\(|b| &gt; \Delta\)</span>, we should set <span class="math inline">\([\mathbf{V}]_{a, b} = 0\)</span>.</p></li>
+<li><p>Equivalently, we can rewrite <span class="math inline">\([\mathbf{H}]_{i, j}\)</span> as <span class="math display">\[[\mathbf{H}]_{i, j} = u + \sum_{a = -\Delta}^{\Delta} \sum_{b = -\Delta}^{\Delta} [\mathbf{V}]_{a, b}  [\mathbf{X}]_{i+a, j+b}.\]</span> :eqlabel:<code>eq_conv-layer</code></p></li>
+<li><p>This reduces the number of parameters from <span class="math inline">\(4 \cdot 10^6\)</span> to <span class="math inline">\(4 \Delta^2\)</span>, where <span class="math inline">\(\Delta\)</span> is typically smaller than <span class="math inline">\(10\)</span>. We’ve reduced the number of parameters by another 4 orders of magnitude.</p></li>
+<li><p>This equation, in essence, is what we call a <em>convolutional layer</em>. <em>Convolutional neural networks</em> (CNNs) are neural networks that contain convolutional layers.</p></li>
 </ul>
 </section>
 <section id="convolutions" class="slide level2">
@@ -569,90 +518,48 @@ Philipp Pelz
 </ul>
 <p><span class="math display">\[(f * g)(\mathbf{x}) = \int f(\mathbf{z}) g(\mathbf{x}-\mathbf{z}) d\mathbf{z}.\]</span></p>
 <ul>
-<li>That is, we measure the overlap between <span class="math inline">\(f\)</span> and <span class="math inline">\(g\)</span> when one function is “flipped” and shifted by <span class="math inline">\(\mathbf{x}\)</span>.</li>
-<li>Whenever we have discrete objects, the integral turns into a sum. For instance, for vectors from the set of square summable infinite dimensional vectors with index running over <span class="math inline">\(\mathbb{Z}\)</span> we obtain the following definition:</li>
+<li>For discrete objects, the integral becomes a sum. For two-dimensional tensors:</li>
 </ul>
-</section>
-<section class="slide level2">
-
-<p><span class="math display">\[(f * g)(i) = \sum_a f(a) g(i-a).\]</span></p>
+<p><span class="math display">\[(f * g)(i, j) = \sum_a\sum_b f(a, b) g(i-a, j-b).\]</span> :eqlabel:<code>eq_2d-conv-discrete</code></p>
 <ul>
-<li>For two-dimensional tensors, we have a corresponding sum with indices <span class="math inline">\((a, b)\)</span> for <span class="math inline">\(f\)</span> and <span class="math inline">\((i-a, j-b)\)</span> for <span class="math inline">\(g\)</span>, respectively:</li>
-<li><span class="math display">\[(f * g)(i, j) = \sum_a\sum_b f(a, b) g(i-a, j-b).\]</span> :eqlabel:<code>eq_2d-conv-discrete</code></li>
-</ul>
-</section>
-<section class="slide level2">
-
-<ul>
-<li>This looks similar to :eqref:<code>eq_conv-layer</code>, with one major difference.</li>
-<li>Rather than using <span class="math inline">\((i+a, j+b)\)</span>, we are using the difference instead. Note, though, that this distinction is mostly cosmetic since we can always match the notation between :eqref:<code>eq_conv-layer</code> and :eqref:<code>eq_2d-conv-discrete</code>.</li>
-<li>Our original definition in :eqref:<code>eq_conv-layer</code> more properly describes a <em>cross-correlation</em>. We will come back to this in the following section.</li>
+<li>This looks similar to :eqref:<code>eq_conv-layer</code>, with one major difference: rather than using <span class="math inline">\((i+a, j+b)\)</span>, we use the difference instead.</li>
+<li>Note that this distinction is mostly cosmetic since we can always match the notation between :eqref:<code>eq_conv-layer</code> and :eqref:<code>eq_2d-conv-discrete</code>.</li>
+<li>Our original definition in :eqref:<code>eq_conv-layer</code> more properly describes a <em>cross-correlation</em>.</li>
 </ul>
 </section>
 <section id="channels" class="slide level2">
 <h2>Channels</h2>
 <ul>
 <li>Returning to Waldo detector, let’s see what this looks like.</li>
-<li>convolutional layer picks windows of a given size and weighs intensities according to the filter <span class="math inline">\(\mathsf{V}\)</span>, as demonstrated in :numref:<code>fig_waldo_mask</code>.</li>
-<li>aim to learn a model so that wherever the “waldoness” is highest, we should find a peak in the hidden layer representations.</li>
+<li>Convolutional layer picks windows of a given size and weighs intensities according to the filter <span class="math inline">\(\mathsf{V}\)</span>, as demonstrated in :numref:<code>fig_waldo_mask</code>.</li>
+<li>Aim to learn a model so that wherever the “waldoness” is highest, we should find a peak in the hidden layer representations.</li>
 </ul>
 
 <img data-src="../img/waldo-mask.jpg" width="400" class="r-stretch quarto-figure-center"><p class="caption">Detect Waldo.</p></section>
 <section class="slide level2">
 
 <ul>
-<li>There is just one problem with this approach. So far, we blissfully ignored that images consist of 3 channels: red, green, and blue.<br>
-</li>
-<li>In sum, images are not two-dimensional objects but rather third-order tensors, characterized by a height, width, and channel, e.g., with shape <span class="math inline">\(1024 \times 1024 \times 3\)</span> pixels.<br>
-</li>
-<li>While the first two of these axes concern spatial relationships, the third can be regarded as assigning a multidimensional representation to each pixel location.</li>
-<li>We thus index <span class="math inline">\(\mathsf{X}\)</span> as <span class="math inline">\([\mathsf{X}]_{i, j, k}\)</span>. The convolutional filter has to adapt accordingly. Instead of <span class="math inline">\([\mathbf{V}]_{a,b}\)</span>, we now have <span class="math inline">\([\mathsf{V}]_{a,b,c}\)</span>.</li>
+<li><p>Images consist of 3 channels: red, green, and blue.<br>
+</p></li>
+<li><p>Images are third-order tensors, characterized by a height, width, and channel, e.g., with shape <span class="math inline">\(1024 \times 1024 \times 3\)</span> pixels.<br>
+</p></li>
+<li><p>While the first two axes concern spatial relationships, the third can be regarded as assigning a multidimensional representation to each pixel location.</p></li>
+<li><p>We thus index <span class="math inline">\(\mathsf{X}\)</span> as <span class="math inline">\([\mathsf{X}]_{i, j, k}\)</span>. The convolutional filter has to adapt accordingly. Instead of <span class="math inline">\([\mathbf{V}]_{a,b}\)</span>, we now have <span class="math inline">\([\mathsf{V}]_{a,b,c}\)</span>.</p></li>
+<li><p>Hidden representations are also formulated as third-order tensors <span class="math inline">\(\mathsf{H}\)</span>.</p></li>
+<li><p>These channels are sometimes called <em>feature maps</em>, as each provides a spatialized set of learned features.</p></li>
+<li><p>To support multiple channels in both inputs (<span class="math inline">\(\mathsf{X}\)</span>) and hidden representations (<span class="math inline">\(\mathsf{H}\)</span>), we add a fourth coordinate to <span class="math inline">\(\mathsf{V}\)</span>: <span class="math inline">\([\mathsf{V}]_{a, b, c, d}\)</span>.</p></li>
 </ul>
-</section>
-<section class="slide level2">
-
-<ul>
-<li>Moreover, just as our input consists of a third-order tensor, it turns out to be a good idea to similarly formulate our hidden representations as third-order tensors <span class="math inline">\(\mathsf{H}\)</span>.</li>
-<li>In other words, rather than just having a single hidden representation corresponding to each spatial location, we want an entire vector of hidden representations corresponding to each spatial location.</li>
-<li>We could think of the hidden representations as comprising a number of two-dimensional grids stacked on top of each other. As in the inputs, these are sometimes called <em>channels</em>.</li>
-<li>They are also sometimes called <em>feature maps</em>, as each provides a spatialized set of learned features to the subsequent layer. Intuitively, you might imagine that at lower layers that are closer to inputs, some channels could become specialized to recognize edges while others could recognize textures.</li>
-</ul>
-</section>
-<section class="slide level2">
-
-<ul>
-<li>To support multiple channels in both inputs (<span class="math inline">\(\mathsf{X}\)</span>) and hidden representations (<span class="math inline">\(\mathsf{H}\)</span>), we can add a fourth coordinate to <span class="math inline">\(\mathsf{V}\)</span>: <span class="math inline">\([\mathsf{V}]_{a, b, c, d}\)</span>.</li>
-<li>Putting everything together we have:</li>
-</ul>
-<p><span class="math display">\[[\mathsf{H}]_{i,j,d} = \sum_{a = -\Delta}^{\Delta} \sum_{b = -\Delta}^{\Delta} \sum_c [\mathsf{V}]_{a, b, c, d} [\mathsf{X}]_{i+a, j+b, c},\]</span> :eqlabel:<code>eq_conv-layer-channels</code></p>
-<ul>
-<li>where <span class="math inline">\(d\)</span> indexes the output channels in the hidden representations <span class="math inline">\(\mathsf{H}\)</span>. The subsequent convolutional layer will go on to take a third-order tensor, <span class="math inline">\(\mathsf{H}\)</span>, as input.</li>
-<li>Being more general, :eqref:<code>eq_conv-layer-channels</code> is the definition of a convolutional layer for multiple channels, where <span class="math inline">\(\mathsf{V}\)</span> is a kernel or filter of the layer.</li>
-</ul>
-</section>
-<section class="slide level2">
-
-<ul>
-<li>still many operations that we need to address.</li>
-<li>For instance, we need to figure out how to combine all the hidden representations to a single output, e.g., whether there is a Waldo <em>anywhere</em> in the image.</li>
-<li>We also need to decide how to compute things efficiently, how to combine multiple layers, appropriate activation functions, and how to make reasonable design choices to yield networks that are effective in practice. We turn to these issues in the remainder of the chapter.</li>
-</ul>
+<p>The complete convolution can be written as:</p>
+<p><span class="math inline">\([\mathsf{H}]_{i,j,d} = \sum_{a = -\Delta}^{\Delta} \sum_{b = -\Delta}^{\Delta} \sum_c [\mathsf{V}]_{a, b, c, d} [\mathsf{X}]_{i+a, j+b, c},\)</span></p>
+<p>where <span class="math inline">\(d\)</span> indexes the output channels in the hidden representations <span class="math inline">\(\mathsf{H}\)</span>.</p>
 </section>
 <section id="summary-and-discussion" class="slide level2">
 <h2>Summary and Discussion</h2>
 <ul>
 <li>derived the structure of convolutional neural networks from first principles.</li>
-<li>-unclear whether this is what led to the invention of CNNs, it is satisfying to know that they are the <em>right</em> choice when applying reasonable principles to how image processing and computer vision algorithms should operate, at least at lower levels.</li>
-<li>In particular, translation invariance in images implies that all patches of an image will be treated in the same manner.</li>
+<li>Translation invariance in images implies that all patches of an image will be treated in the same manner.</li>
 <li>Locality means that only a small neighborhood of pixels will be used to compute the corresponding hidden representations. Some of the earliest references to CNNs are in the form of the Neocognitron :cite:<code>Fukushima.1982</code>.</li>
-<li>second principle that we encountered in our reasoning is how to reduce the number of parameters in a function class without limiting its expressive power, at least, whenever certain assumptions on the model hold.</li>
-<li>saw a dramatic reduction of complexity as a result of this restriction, turning computationally and statistically infeasible problems into tractable models.</li>
-</ul>
-</section>
-<section class="slide level2">
-
-<ul>
-<li>Adding channels allowed us to bring back some of the complexity that was lost due to the restrictions imposed on the convolutional kernel by locality and translation invariance. Note that channels are quite a natural addition beyond red, green, and blue.</li>
+<li>Adding channels allowed us to bring back some of the complexity that was lost due to the restrictions imposed on the convolutional kernel by locality and translation invariance.</li>
 <li>Many images have tens to hundreds of channels, generating hyperspectral images instead. They report data on many different wavelengths. In the following we will see how to use convolutions effectively to manipulate the dimensionality of the images they operate on, how to move from location-based to channel-based representations and how to deal with large numbers of categories efficiently.</li>
 </ul>
 </section>
@@ -670,7 +577,6 @@ Philipp Pelz
 <li>Do you think that convolutional layers might also be applicable for text data? Which problems might you encounter with language?</li>
 <li>What happens with convolutions when an object is at the boundary of an image.</li>
 <li>Prove that the convolution is symmetric, i.e., <span class="math inline">\(f * g = g * f\)</span>.</li>
-<li>Prove the convolution theorem, i.e., <span class="math inline">\(f * g = \mathcal{F}^{-1}\left[\mathcal{F}[f] \cdot \mathcal{F}[g]\right]\)</span>. Can you use it to accelerate convolutions?</li>
 </ol>
 </section>
 <section id="convolutions-for-images" class="slide level2">
@@ -679,52 +585,33 @@ Philipp Pelz
 <li>understand how convolutional layers work in theory, we are ready to see how they work in practice.</li>
 <li>Building on our motivation of convolutional neural networks as efficient architectures for exploring structure in image data, we stick with images as our running example.</li>
 </ul>
-<div id="66fbc227" class="cell" data-execution_count="1">
+<div id="d477c9e6" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href=""></a><span class="im">from</span> d2l <span class="im">import</span> torch <span class="im">as</span> d2l</span>
 <span id="cb1-2"><a href=""></a><span class="im">import</span> torch</span>
 <span id="cb1-3"><a href=""></a><span class="im">from</span> torch <span class="im">import</span> nn</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-</section>
-<section id="the-cross-correlation-operation" class="slide level2">
-<h2>The Cross-Correlation Operation</h2>
 <ul>
-<li><p>Recall that strictly speaking, convolutional layers are a misnomer, since the operations they express are more accurately described as cross-correlations.</p></li>
-<li><p>Based on our descriptions of convolutional layers in :numref:<code>sec_why-conv</code>, in such a layer, an input tensor and a kernel tensor are combined to produce an output tensor through a (<strong>cross-correlation operation.</strong>)</p></li>
-<li><p>ignore channels for now and see how this works with two-dimensional data and hidden representations.</p></li>
-<li><p>In :numref:<code>fig_correlation</code>, the input is a two-dimensional tensor with a height of 3 and width of 3. We mark the shape of the tensor as <span class="math inline">\(3 \times 3\)</span> or (<span class="math inline">\(3\)</span>, <span class="math inline">\(3\)</span>). The height and width of the kernel are both 2. The shape of the <em>kernel window</em> (or <em>convolution window</em>) is given by the height and width of the kernel (here it is <span class="math inline">\(2 \times 2\)</span>).</p></li>
+<li>Recall that strictly speaking, convolutional layers are a misnomer, since the operations they express are more accurately described as cross-correlations.</li>
+<li>Based on our descriptions of convolutional layers in :numref:<code>sec_why-conv</code>, in such a layer, an input tensor and a kernel tensor are combined to produce an output tensor through a cross-correlation operation.</li>
 </ul>
-</section>
+
+<img data-src="../img/correlation.svg" class="r-stretch quarto-figure-center"><p class="caption">Two-dimensional cross-correlation operation</p></section>
 <section class="slide level2">
 
-
-<img data-src="../img/correlation.svg" class="r-stretch quarto-figure-center"><p class="caption">Two-dimensional cross-correlation operation. The shaded portions are the first output element as well as the input and kernel tensor elements used for the output computation: <span class="math inline">\(0\times0+1\times1+3\times2+4\times3=19\)</span>.</p><ul>
+<ul>
 <li>In the two-dimensional cross-correlation operation, we begin with the convolution window positioned at the upper-left corner of the input tensor and slide it across the input tensor, both from left to right and top to bottom.</li>
 <li>When the convolution window slides to a certain position, the input subtensor contained in that window and the kernel tensor are multiplied elementwise and the resulting tensor is summed up yielding a single scalar value.</li>
 </ul>
-</section>
-<section class="slide level2">
-
-<ul>
-<li>This result gives the value of the output tensor at the corresponding location. Here, the output tensor has a height of 2 and width of 2 and the four elements are derived from the two-dimensional cross-correlation operation:</li>
-</ul>
+<p>The output tensor has a height of 2 and a width of 2 and the four elements are derived from the two-dimensional cross-correlation operation:</p>
 <p><span class="math display">\[
 0\times0+1\times1+3\times2+4\times3=19,\\
 1\times0+2\times1+4\times2+5\times3=25,\\
 3\times0+4\times1+6\times2+7\times3=37,\\
 4\times0+5\times1+7\times2+8\times3=43.
 \]</span></p>
-<ul>
-<li>along each axis, the output size is slightly smaller than the input size.</li>
-<li>Because the kernel has width and height greater than one, we can only properly compute the cross-correlation for locations where the kernel fits wholly within the image, the output size is given by the input size <span class="math inline">\(n_h \times n_w\)</span> minus the size of the convolution kernel <span class="math inline">\(k_h \times k_w\)</span> via</li>
-</ul>
+<p>The output size is given by the input size <span class="math inline">\(n_h \times n_w\)</span> minus the size of the convolution kernel <span class="math inline">\(k_h \times k_w\)</span> via:</p>
 <p><span class="math display">\[(n_h-k_h+1) \times (n_w-k_w+1).\]</span></p>
-</section>
-<section class="slide level2">
-
-<ul>
-<li>This is the case since we need enough space to “shift” the convolution kernel across the image. Later we will see how to keep the size unchanged by padding the image with zeros around its boundary so that there is enough space to shift the kernel. Next, we implement this process in the <code>corr2d</code> function, which accepts an input tensor <code>X</code> and a kernel tensor <code>K</code> and returns an output tensor <code>Y</code>.</li>
-</ul>
-<div id="280cba9b" class="cell" data-execution_count="2">
+<div id="801507b2" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href=""></a><span class="kw">def</span> corr2d(X, K):  <span class="co">#@save</span></span>
 <span id="cb2-2"><a href=""></a>    <span class="co">"""Compute 2D cross-correlation."""</span></span>
 <span id="cb2-3"><a href=""></a>    h, w <span class="op">=</span> K.shape</span>
@@ -737,40 +624,69 @@ Philipp Pelz
 </section>
 <section class="slide level2">
 
-<ul>
-<li>We can construct the input tensor <code>X</code> and the kernel tensor <code>K</code> from :numref:<code>fig_correlation</code> to [<strong>validate the output of the above implementation</strong>] of the two-dimensional cross-correlation operation.</li>
-</ul>
-<div id="1521789e" class="cell" data-execution_count="3">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href=""></a>X <span class="op">=</span> d2l.tensor([[<span class="fl">0.0</span>, <span class="fl">1.0</span>, <span class="fl">2.0</span>], [<span class="fl">3.0</span>, <span class="fl">4.0</span>, <span class="fl">5.0</span>], [<span class="fl">6.0</span>, <span class="fl">7.0</span>, <span class="fl">8.0</span>]])</span>
-<span id="cb3-2"><a href=""></a>K <span class="op">=</span> d2l.tensor([[<span class="fl">0.0</span>, <span class="fl">1.0</span>], [<span class="fl">2.0</span>, <span class="fl">3.0</span>]])</span>
-<span id="cb3-3"><a href=""></a>corr2d(X, K)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="3">
-<pre><code>tensor([[19., 25.],
-        [37., 43.]])</code></pre>
+<div id="420aa1f3" class="cell" data-execution_count="3">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href=""></a><span class="co"># Create a 256x256 sparse image with a few 1s</span></span>
+<span id="cb3-2"><a href=""></a>X <span class="op">=</span> torch.zeros((<span class="dv">64</span>, <span class="dv">64</span>))</span>
+<span id="cb3-3"><a href=""></a><span class="co"># Add some 1s at specific positions (this is just an example pattern)</span></span>
+<span id="cb3-4"><a href=""></a>X[<span class="dv">11</span>, <span class="dv">23</span>] <span class="op">=</span> <span class="fl">1.0</span></span>
+<span id="cb3-5"><a href=""></a>X[<span class="dv">23</span>, <span class="dv">23</span>] <span class="op">=</span> <span class="fl">1.0</span></span>
+<span id="cb3-6"><a href=""></a>X[<span class="dv">56</span>, <span class="dv">48</span>] <span class="op">=</span> <span class="fl">1.0</span></span>
+<span id="cb3-7"><a href=""></a>X[<span class="dv">19</span>, <span class="dv">54</span>] <span class="op">=</span> <span class="fl">1.0</span></span>
+<span id="cb3-8"><a href=""></a></span>
+<span id="cb3-9"><a href=""></a><span class="co"># Create a 3x3 cross-shaped kernel</span></span>
+<span id="cb3-10"><a href=""></a>K <span class="op">=</span> torch.tensor([[<span class="fl">0.0</span>, <span class="fl">1.0</span>, <span class="fl">0.0</span>],</span>
+<span id="cb3-11"><a href=""></a>                 [<span class="fl">1.0</span>, <span class="fl">1.0</span>, <span class="fl">1.0</span>],</span>
+<span id="cb3-12"><a href=""></a>                 [<span class="fl">0.0</span>, <span class="fl">1.0</span>, <span class="fl">0.0</span>]])</span>
+<span id="cb3-13"><a href=""></a></span>
+<span id="cb3-14"><a href=""></a><span class="co"># Apply the correlation</span></span>
+<span id="cb3-15"><a href=""></a>Y <span class="op">=</span> corr2d(X, K)</span>
+<span id="cb3-16"><a href=""></a></span>
+<span id="cb3-17"><a href=""></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb3-18"><a href=""></a></span>
+<span id="cb3-19"><a href=""></a>fig, (ax1, ax2, ax3) <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">15</span>, <span class="dv">5</span>))</span>
+<span id="cb3-20"><a href=""></a></span>
+<span id="cb3-21"><a href=""></a><span class="co"># Plot input image X</span></span>
+<span id="cb3-22"><a href=""></a>ax1.imshow(X, cmap<span class="op">=</span><span class="st">'gray'</span>)</span>
+<span id="cb3-23"><a href=""></a>ax1.set_title(<span class="st">'Input Image (X)'</span>)</span>
+<span id="cb3-24"><a href=""></a>ax1.axis(<span class="st">'on'</span>)</span>
+<span id="cb3-25"><a href=""></a></span>
+<span id="cb3-26"><a href=""></a><span class="co"># Plot kernel K</span></span>
+<span id="cb3-27"><a href=""></a>ax2.imshow(K, cmap<span class="op">=</span><span class="st">'gray'</span>)</span>
+<span id="cb3-28"><a href=""></a>ax2.set_title(<span class="st">'Kernel (K)'</span>)</span>
+<span id="cb3-29"><a href=""></a>ax2.axis(<span class="st">'on'</span>)</span>
+<span id="cb3-30"><a href=""></a></span>
+<span id="cb3-31"><a href=""></a><span class="co"># Plot output Y</span></span>
+<span id="cb3-32"><a href=""></a>ax3.imshow(Y, cmap<span class="op">=</span><span class="st">'gray'</span>)</span>
+<span id="cb3-33"><a href=""></a>ax3.set_title(<span class="st">'Output (Y)'</span>)</span>
+<span id="cb3-34"><a href=""></a>ax3.axis(<span class="st">'on'</span>)</span>
+<span id="cb3-35"><a href=""></a></span>
+<span id="cb3-36"><a href=""></a>plt.tight_layout()</span>
+<span id="cb3-37"><a href=""></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure>
+<p><img data-src="04_convnets_0_files/figure-revealjs/cell-4-output-1.png" width="1430" height="485"></p>
+</figure>
+</div>
 </div>
 </div>
 </section>
 <section id="convolutional-layers" class="slide level2">
 <h2>Convolutional Layers</h2>
 <ul>
-<li><p>convolutional layer cross-correlates the input and kernel and adds a scalar bias to produce an output.</p></li>
-<li><p>The two parameters of a convolutional layer are the kernel and the scalar bias.</p></li>
-<li><p>When training models based on convolutional layers, we typically initialize the kernels randomly, just as we would with a fully connected layer.</p></li>
-<li><p>We are now ready to [<strong>implement a two-dimensional convolutional layer</strong>] based on the <code>corr2d</code> function defined above.</p></li>
-<li><p>In the <code>__init__</code> constructor method, we declare <code>weight</code> and <code>bias</code> as the two model parameters. The forward propagation method calls the <code>corr2d</code> function and adds the bias.</p></li>
+<li>A convolutional layer cross-correlates the input and kernel and adds a scalar bias to produce an output.</li>
+<li>The two parameters of a convolutional layer are the kernel and the scalar bias.</li>
+<li>When training models based on convolutional layers, we typically initialize the kernels randomly, just as we would with a fully connected layer.</li>
 </ul>
-</section>
-<section class="slide level2">
-
-<div id="989d3d43" class="cell" data-execution_count="4">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href=""></a><span class="kw">class</span> Conv2D(nn.Module):</span>
-<span id="cb5-2"><a href=""></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, kernel_size):</span>
-<span id="cb5-3"><a href=""></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
-<span id="cb5-4"><a href=""></a>        <span class="va">self</span>.weight <span class="op">=</span> nn.Parameter(torch.rand(kernel_size))</span>
-<span id="cb5-5"><a href=""></a>        <span class="va">self</span>.bias <span class="op">=</span> nn.Parameter(torch.zeros(<span class="dv">1</span>))</span>
-<span id="cb5-6"><a href=""></a></span>
-<span id="cb5-7"><a href=""></a>    <span class="kw">def</span> forward(<span class="va">self</span>, x):</span>
-<span id="cb5-8"><a href=""></a>        <span class="cf">return</span> corr2d(x, <span class="va">self</span>.weight) <span class="op">+</span> <span class="va">self</span>.bias</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="aaf97e57" class="cell" data-execution_count="4">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href=""></a><span class="kw">class</span> Conv2D(nn.Module):</span>
+<span id="cb4-2"><a href=""></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, kernel_size):</span>
+<span id="cb4-3"><a href=""></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
+<span id="cb4-4"><a href=""></a>        <span class="va">self</span>.weight <span class="op">=</span> nn.Parameter(torch.rand(kernel_size))</span>
+<span id="cb4-5"><a href=""></a>        <span class="va">self</span>.bias <span class="op">=</span> nn.Parameter(torch.zeros(<span class="dv">1</span>))</span>
+<span id="cb4-6"><a href=""></a></span>
+<span id="cb4-7"><a href=""></a>    <span class="kw">def</span> forward(<span class="va">self</span>, x):</span>
+<span id="cb4-8"><a href=""></a>        <span class="cf">return</span> corr2d(x, <span class="va">self</span>.weight) <span class="op">+</span> <span class="va">self</span>.bias</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <ul>
 <li>In <span class="math inline">\(h \times w\)</span> convolution or a <span class="math inline">\(h \times w\)</span> convolution kernel, the height and width of the convolution kernel are <span class="math inline">\(h\)</span> and <span class="math inline">\(w\)</span>, respectively.</li>
@@ -780,14 +696,14 @@ Philipp Pelz
 <section id="object-edge-detection-in-images" class="slide level2">
 <h2>Object Edge Detection in Images</h2>
 <ul>
-<li>take a moment to parse [<strong>a simple application of a convolutional layer: detecting the edge of an object in an image</strong>] by finding the location of the pixel change.</li>
+<li>Let’s examine a simple application of a convolutional layer: detecting the edge of an object in an image by finding the location of pixel changes.</li>
 <li>First, we construct an “image” of <span class="math inline">\(6\times 8\)</span> pixels. The middle four columns are black (0) and the rest are white (1).</li>
 </ul>
-<div id="10562199" class="cell" data-execution_count="5">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href=""></a>X <span class="op">=</span> d2l.ones((<span class="dv">6</span>, <span class="dv">8</span>))</span>
-<span id="cb6-2"><a href=""></a>X[:, <span class="dv">2</span>:<span class="dv">6</span>] <span class="op">=</span> <span class="dv">0</span></span>
-<span id="cb6-3"><a href=""></a>X</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="5">
+<div id="f17782e5" class="cell" data-execution_count="5">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href=""></a>X <span class="op">=</span> d2l.ones((<span class="dv">6</span>, <span class="dv">8</span>))</span>
+<span id="cb5-2"><a href=""></a>X[:, <span class="dv">2</span>:<span class="dv">6</span>] <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb5-3"><a href=""></a>X</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="347">
 <pre><code>tensor([[1., 1., 0., 0., 0., 0., 1., 1.],
         [1., 1., 0., 0., 0., 0., 1., 1.],
         [1., 1., 0., 0., 0., 0., 1., 1.],
@@ -797,24 +713,22 @@ Philipp Pelz
 </div>
 </div>
 <ul>
-<li>next construct a kernel <code>K</code> with a height of 1 and a width of 2.</li>
-<li>perform the cross-correlation operation with the input, if the horizontally adjacent elements are the same, the output is 0. Otherwise, the output is non-zero.</li>
-<li>kernel is special case of a finite difference operator. At location <span class="math inline">\((i,j)\)</span> it computes <span class="math inline">\(x_{i,j} - x_{(i+1),j}\)</span>, i.e., it computes the difference between the values of horizontally adjacent pixels.</li>
-<li>discrete approximation of the first derivative in the horizontal direction. After all, for a function <span class="math inline">\(f(i,j)\)</span> its derivative <span class="math inline">\(-\partial_i f(i,j) = \lim_{\epsilon \to 0} \frac{f(i,j) - f(i+\epsilon,j)}{\epsilon}\)</span>. Let’s see how this works in practice.</li>
+<li>Next we construct a kernel <code>K</code> with a height of 1 and a width of 2. When performing the cross-correlation operation, if the horizontally adjacent elements are the same, the output is 0. Otherwise, the output is non-zero.</li>
+<li>This kernel is a special case of a finite difference operator. At location <span class="math inline">\((i,j)\)</span> it computes <span class="math inline">\(x_{i,j} - x_{(i+1),j}\)</span>, approximating the first derivative in the horizontal direction.</li>
 </ul>
 </section>
 <section class="slide level2">
 
-<div id="7802ed88" class="cell" data-execution_count="6">
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href=""></a>K <span class="op">=</span> d2l.tensor([[<span class="fl">1.0</span>, <span class="op">-</span><span class="fl">1.0</span>]])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="259e3b00" class="cell" data-execution_count="6">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href=""></a>K <span class="op">=</span> d2l.tensor([[<span class="fl">1.0</span>, <span class="op">-</span><span class="fl">1.0</span>]])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <ul>
-<li>ready to perform the cross-correlation operation with arguments <code>X</code> (our input) and <code>K</code> (our kernel). As you can see, [<strong>we detect 1 for the edge from white to black and -1 for the edge from black to white.</strong>] All other outputs take value 0.</li>
+<li>As we can see below, [<strong>we detect 1 for the edge from white to black and -1 for the edge from black to white.</strong>] All other outputs take value 0.</li>
 </ul>
-<div id="901574c2" class="cell" data-execution_count="7">
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href=""></a>Y <span class="op">=</span> corr2d(X, K)</span>
-<span id="cb9-2"><a href=""></a>Y</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="7">
+<div id="f13852d8" class="cell" data-execution_count="7">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href=""></a>Y <span class="op">=</span> corr2d(X, K)</span>
+<span id="cb8-2"><a href=""></a>Y</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="349">
 <pre><code>tensor([[ 0.,  1.,  0.,  0.,  0., -1.,  0.],
         [ 0.,  1.,  0.,  0.,  0., -1.,  0.],
         [ 0.,  1.,  0.,  0.,  0., -1.,  0.],
@@ -826,9 +740,9 @@ Philipp Pelz
 <ul>
 <li>We can now apply the kernel to the transposed image. As expected, it vanishes. [<strong>The kernel <code>K</code> only detects vertical edges.</strong>]</li>
 </ul>
-<div id="e4a771de" class="cell" data-execution_count="8">
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href=""></a>corr2d(d2l.transpose(X), K)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="8">
+<div id="c170ae30" class="cell" data-execution_count="8">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href=""></a>corr2d(d2l.transpose(X), K)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="350">
 <pre><code>tensor([[0., 0., 0., 0., 0.],
         [0., 0., 0., 0., 0.],
         [0., 0., 0., 0., 0.],
@@ -843,53 +757,48 @@ Philipp Pelz
 <section id="learning-a-kernel" class="slide level2">
 <h2>Learning a Kernel</h2>
 <ul>
-<li>Designing an edge detector by finite differences <code>[1, -1]</code> is neat if we know this is precisely what we are looking for. However, as we look at larger kernels, and consider successive layers of convolutions, it might be impossible to specify precisely what each filter should be doing manually.</li>
 <li>Now let’s see whether we can [<strong>learn the kernel that generated <code>Y</code> from <code>X</code></strong>] by looking at the input–output pairs only.</li>
 <li>We first construct a convolutional layer and initialize its kernel as a random tensor. Next, in each iteration, we will use the squared error to compare <code>Y</code> with the output of the convolutional layer.</li>
-<li>We can then calculate the gradient to update the kernel. For the sake of simplicity, in the following we use the built-in class for two-dimensional convolutional layers and ignore the bias.</li>
 </ul>
 </section>
 <section class="slide level2">
 
-<div id="6922fb33" class="cell" data-execution_count="9">
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href=""></a><span class="co">## Construct a two-dimensional convolutional layer with 1 output channel and a</span></span>
-<span id="cb13-2"><a href=""></a><span class="co">## kernel of shape (1, 2). For the sake of simplicity, we ignore the bias here</span></span>
-<span id="cb13-3"><a href=""></a>conv2d <span class="op">=</span> nn.LazyConv2d(<span class="dv">1</span>, kernel_size<span class="op">=</span>(<span class="dv">1</span>, <span class="dv">2</span>), bias<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb13-4"><a href=""></a></span>
-<span id="cb13-5"><a href=""></a><span class="co">## The two-dimensional convolutional layer uses four-dimensional input and</span></span>
-<span id="cb13-6"><a href=""></a><span class="co">## output in the format of (example, channel, height, width), where the batch</span></span>
-<span id="cb13-7"><a href=""></a><span class="co">## size (number of examples in the batch) and the number of channels are both 1</span></span>
-<span id="cb13-8"><a href=""></a>X <span class="op">=</span> X.reshape((<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">6</span>, <span class="dv">8</span>))</span>
-<span id="cb13-9"><a href=""></a>Y <span class="op">=</span> Y.reshape((<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">6</span>, <span class="dv">7</span>))</span>
-<span id="cb13-10"><a href=""></a>lr <span class="op">=</span> <span class="fl">3e-2</span>  <span class="co">## Learning rate</span></span>
-<span id="cb13-11"><a href=""></a></span>
-<span id="cb13-12"><a href=""></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">10</span>):</span>
-<span id="cb13-13"><a href=""></a>    Y_hat <span class="op">=</span> conv2d(X)</span>
-<span id="cb13-14"><a href=""></a>    l <span class="op">=</span> (Y_hat <span class="op">-</span> Y) <span class="op">**</span> <span class="dv">2</span></span>
-<span id="cb13-15"><a href=""></a>    conv2d.zero_grad()</span>
-<span id="cb13-16"><a href=""></a>    l.<span class="bu">sum</span>().backward()</span>
-<span id="cb13-17"><a href=""></a>    <span class="co">## Update the kernel</span></span>
-<span id="cb13-18"><a href=""></a>    conv2d.weight.data[:] <span class="op">-=</span> lr <span class="op">*</span> conv2d.weight.grad</span>
-<span id="cb13-19"><a href=""></a>    <span class="cf">if</span> (i <span class="op">+</span> <span class="dv">1</span>) <span class="op">%</span> <span class="dv">2</span> <span class="op">==</span> <span class="dv">0</span>:</span>
-<span id="cb13-20"><a href=""></a>        <span class="bu">print</span>(<span class="ss">f'epoch </span><span class="sc">{</span>i <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss">, loss </span><span class="sc">{</span>l<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:.3f}</span><span class="ss">'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="17335fd4" class="cell" data-execution_count="9">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href=""></a><span class="co">## Construct a two-dimensional convolutional layer with 1 output channel and a</span></span>
+<span id="cb12-2"><a href=""></a><span class="co">## kernel of shape (1, 2). For the sake of simplicity, we ignore the bias here</span></span>
+<span id="cb12-3"><a href=""></a>conv2d <span class="op">=</span> nn.LazyConv2d(<span class="dv">1</span>, kernel_size<span class="op">=</span>(<span class="dv">1</span>, <span class="dv">2</span>), bias<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb12-4"><a href=""></a></span>
+<span id="cb12-5"><a href=""></a><span class="co">## The two-dimensional convolutional layer uses four-dimensional input and</span></span>
+<span id="cb12-6"><a href=""></a><span class="co">## output in the format of (example, channel, height, width), where the batch</span></span>
+<span id="cb12-7"><a href=""></a><span class="co">## size (number of examples in the batch) and the number of channels are both 1</span></span>
+<span id="cb12-8"><a href=""></a>X <span class="op">=</span> X.reshape((<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">6</span>, <span class="dv">8</span>))</span>
+<span id="cb12-9"><a href=""></a>Y <span class="op">=</span> Y.reshape((<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">6</span>, <span class="dv">7</span>))</span>
+<span id="cb12-10"><a href=""></a>lr <span class="op">=</span> <span class="fl">3e-2</span>  <span class="co">## Learning rate</span></span>
+<span id="cb12-11"><a href=""></a></span>
+<span id="cb12-12"><a href=""></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">10</span>):</span>
+<span id="cb12-13"><a href=""></a>    Y_hat <span class="op">=</span> conv2d(X)</span>
+<span id="cb12-14"><a href=""></a>    l <span class="op">=</span> (Y_hat <span class="op">-</span> Y) <span class="op">**</span> <span class="dv">2</span></span>
+<span id="cb12-15"><a href=""></a>    conv2d.zero_grad()</span>
+<span id="cb12-16"><a href=""></a>    l.<span class="bu">sum</span>().backward()</span>
+<span id="cb12-17"><a href=""></a>    <span class="co">## Update the kernel</span></span>
+<span id="cb12-18"><a href=""></a>    conv2d.weight.data[:] <span class="op">-=</span> lr <span class="op">*</span> conv2d.weight.grad</span>
+<span id="cb12-19"><a href=""></a>    <span class="cf">if</span> (i <span class="op">+</span> <span class="dv">1</span>) <span class="op">%</span> <span class="dv">2</span> <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb12-20"><a href=""></a>        <span class="bu">print</span>(<span class="ss">f'epoch </span><span class="sc">{</span>i <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss">, loss </span><span class="sc">{</span>l<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:.3f}</span><span class="ss">'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>epoch 2, loss 10.221
-epoch 4, loss 1.744
-epoch 6, loss 0.305
-epoch 8, loss 0.056
-epoch 10, loss 0.011</code></pre>
+<pre><code>epoch 2, loss 1.746
+epoch 4, loss 0.319
+epoch 6, loss 0.064
+epoch 8, loss 0.015
+epoch 10, loss 0.004</code></pre>
 </div>
 </div>
 <ul>
-<li>Note that the error has dropped to a small value after 10 iterations. Now we will <strong>take a look at the kernel tensor we learned.</strong></li>
+<li>Let’s <strong>take a look at the kernel tensor we learned.</strong></li>
 </ul>
-</section>
-<section class="slide level2">
-
-<div id="e4d30608" class="cell" data-execution_count="10">
-<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href=""></a>d2l.reshape(conv2d.weight.data, (<span class="dv">1</span>, <span class="dv">2</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="10">
-<pre><code>tensor([[ 0.9774, -0.9895]])</code></pre>
+<div id="06d7f7ea" class="cell" data-execution_count="10">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href=""></a>d2l.reshape(conv2d.weight.data, (<span class="dv">1</span>, <span class="dv">2</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="352">
+<pre><code>tensor([[ 0.9877, -0.9990]])</code></pre>
 </div>
 </div>
 <ul>
@@ -900,50 +809,27 @@ epoch 10, loss 0.011</code></pre>
 <h2>Cross-Correlation and Convolution</h2>
 <ul>
 <li>Recall our observation from :numref:<code>sec_why-conv</code> of the correspondence between the cross-correlation and convolution operations.</li>
-<li>consider two-dimensional convolutional layers. What if such layers perform strict convolution operations as defined in :eqref:<code>eq_2d-conv-discrete</code> instead of cross-correlations?</li>
-<li>for strict <em>convolution</em> operation, we only need to flip the two-dimensional kernel tensor both horizontally and vertically, and then perform the <em>cross-correlation</em> operation with the input tensor.</li>
-<li>kernels are learned from data in deep learning –&gt; outputs of convolutional layers remain unaffected no matter such layers perform either the strict convolution operations or the cross-correlation operations.</li>
-</ul>
-</section>
-<section class="slide level2">
-
-<ul>
-<li>suppose that a convolutional layer performs <em>cross-correlation</em> and learns the kernel in :numref:<code>fig_correlation</code>, which is denoted as the matrix <span class="math inline">\(\mathbf{K}\)</span> here.</li>
-<li>Assuming that other conditions remain unchanged, when this layer performs strict <em>convolution</em> instead, the learned kernel <span class="math inline">\(\mathbf{K}'\)</span> will be the same as <span class="math inline">\(\mathbf{K}\)</span> after <span class="math inline">\(\mathbf{K}'\)</span> is flipped both horizontally and vertically.</li>
-<li>That is to say, when the convolutional layer performs strict <em>convolution</em> for the input in :numref:<code>fig_correlation</code> and <span class="math inline">\(\mathbf{K}'\)</span>, the same output in :numref:<code>fig_correlation</code> (cross-correlation of the input and <span class="math inline">\(\mathbf{K}\)</span>) will be obtained.</li>
-<li>continue to refer to the cross-correlation operation as a convolution even though, strictly-speaking, it is slightly different.</li>
-<li>Besides, we use the term <em>element</em> to refer to an entry (or component) of any tensor representing a layer representation or a convolution kernel.</li>
+<li>For strict <em>convolution</em> operation, we only need to flip the two-dimensional kernel tensor both horizontally and vertically, and then perform the <em>cross-correlation</em> operation with the input tensor.</li>
+<li>Since kernels are learned from data in deep learning, outputs of convolutional layers remain unaffected no matter such layers perform either the strict convolution operations or the cross-correlation operations.</li>
+<li>When the convolutional layer performs strict <em>convolution</em> for the input and the flipped kernel, we get the same output as the cross-correlation of the input and original kernel.</li>
+<li>We continue to refer to the cross-correlation operation as a convolution even though, strictly-speaking, it is slightly different.</li>
+<li>We use the term <em>element</em> to refer to an entry (or component) of any tensor representing a layer representation or a convolution kernel.</li>
 </ul>
 </section>
 <section id="feature-map-and-receptive-field" class="slide level2">
 <h2>Feature Map and Receptive Field</h2>
 <ul>
-<li>As described in <em>Why Con Channels</em>, the convolutional layer output in :numref:<code>fig_correlation</code> is sometimes called a <em>feature map</em>, as it can be regarded as the learned representations (features) in the spatial dimensions (e.g., width and height) to the subsequent layer.</li>
-<li>in CNNs, for any element <span class="math inline">\(x\)</span> of some layer, its <em>receptive field</em> refers to all the elements (from all the previous layers) that may affect the calculation of <span class="math inline">\(x\)</span> during the forward propagation.</li>
-<li>receptive field may be larger than the actual size of the input.</li>
-<li>continue to use :numref:<code>fig_correlation</code> to explain the receptive field. Given the <span class="math inline">\(2 \times 2\)</span> convolution kernel, the receptive field of the shaded output element (of value <span class="math inline">\(19\)</span>) is the four elements in the shaded portion of the input.</li>
-<li>denote the <span class="math inline">\(2 \times 2\)</span> output as <span class="math inline">\(\mathbf{Y}\)</span> and consider a deeper CNN with an additional <span class="math inline">\(2 \times 2\)</span> convolutional layer that takes <span class="math inline">\(\mathbf{Y}\)</span> as its input, outputting a single element <span class="math inline">\(z\)</span>.</li>
-<li>In this case, the receptive field of <span class="math inline">\(z\)</span> on <span class="math inline">\(\mathbf{Y}\)</span> includes all the four elements of <span class="math inline">\(\mathbf{Y}\)</span>, while the receptive field on the input includes all the nine input elements.</li>
-<li>Thus, when any element in a feature map needs a larger receptive field to detect input features over a broader area, we can build a deeper network.</li>
+<li>As described in <em>Why Con Channels</em>, the convolutional layer output is sometimes called a <em>feature map</em>, as it can be regarded as the learned representations in the spatial dimensions to the subsequent layer.</li>
+<li>In CNNs, for any element <span class="math inline">\(x\)</span> of some layer, its <em>receptive field</em> refers to all the elements (from all the previous layers) that may affect the calculation of <span class="math inline">\(x\)</span> during the forward propagation.</li>
+<li>The receptive field may be larger than the actual size of the input.</li>
+<li>When any element in a feature map needs a larger receptive field to detect input features over a broader area, we can build a deeper network.</li>
 </ul>
 </section>
 <section class="slide level2">
 
-<ul>
-<li>Receptive fields derive their name from neurophysiology. In a series of experiments :cite:<code>Hubel.Wiesel.1959,Hubel.Wiesel.1962,Hubel.Wiesel.1968</code> on a range of animals and different stimuli, Hubel and iesel explored the response of what is called the visual cortex on said stimuli. By and large they found that lower levels respond to edges and related shapes. Later on, :citet:<code>Field.1987</code> illustrated this effect on natural images with, what can only be called, convolutional kernels.</li>
-</ul>
-</section>
-<section class="slide level2">
 
-<ul>
-<li>We reprint a key figure in :numref:<code>field_visual</code> to illustrate the striking similarities.</li>
-</ul>
-
-<img data-src="../img/field-visual.png" width="600" class="r-stretch quarto-figure-center"><p class="caption">Figure and caption taken from :citet:<code>Field.1987</code>: An example of coding with six different channels. (Left) Examples of the six types of sensor associated with each channel. (Right) Convolution of the image in (Middle) with the six sensors shown in (Left). The response of the individual sensors is determined by sampling these filtered images at a distance proportional to the size of the sensor (shown with dots). This diagram shows the response of only the even symmetric sensors.</p></section>
-<section class="slide level2">
-
-<ul>
-<li>As it turns out, this relation even holds for the features computed by deeper layers of networks trained on image classification tasks, as demonstrated e.g., in :citet:<code>Kuzovkin.Vicente.Petton.ea.2018</code>. Suffice it to say, convolutions have proven to be an incredibly powerful tool for computer vision, both in biology and in code. As such, it is not surprising (in hindsight) that they heralded the recent success in deep learning.</li>
+<img data-src="../img/field-visual.png" width="600" class="r-stretch quarto-figure-center"><p class="caption">Figure and caption taken from :citet:<code>Field.1987</code>: An example of coding with six different channels. (Left) Examples of the six types of sensor associated with each channel. (Right) Convolution of the image in (Middle) with the six sensors shown in (Left). The response of the individual sensors is determined by sampling these filtered images at a distance proportional to the size of the sensor (shown with dots). This diagram shows the response of only the even symmetric sensors.</p><ul>
+<li>this relation holds for features computed by deeper layers of networks trained on image classification tasks. Convolutions have proven to be an incredibly powerful tool for computer vision, both in biology and in code.</li>
 </ul>
 </section>
 <section id="summary" class="slide level2">
@@ -997,9 +883,9 @@ epoch 10, loss 0.011</code></pre>
 <li><em>Padding</em> most popular tool for handling this issue.</li>
 <li>may want to reduce the dimensionality drastically, e.g., if we find the original input resolution to be unwieldy. <em>Strided convolutions</em> are a popular technique that can help in these instances.</li>
 </ul>
-<div id="54631c8c" class="cell" data-execution_count="11">
-<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href=""></a><span class="im">import</span> torch</span>
-<span id="cb17-2"><a href=""></a><span class="im">from</span> torch <span class="im">import</span> nn</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="af5bde81" class="cell" data-execution_count="11">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href=""></a><span class="im">import</span> torch</span>
+<span id="cb16-2"><a href=""></a><span class="im">from</span> torch <span class="im">import</span> nn</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="padding" class="slide level2">
@@ -1042,35 +928,35 @@ epoch 10, loss 0.011</code></pre>
 <li>In the following example, we create a two-dimensional convolutional layer with a height and width of 3 and (<strong>apply 1 pixel of padding on all sides.</strong>)</li>
 <li>input with a height and width of 8, we find that the height and width of the output is also 8.</li>
 </ul>
-<div id="e375cac9" class="cell" data-execution_count="12">
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href=""></a><span class="co">## We define a helper function to calculate convolutions. It initializes the</span></span>
-<span id="cb18-2"><a href=""></a><span class="co">## convolutional layer weights and performs corresponding dimensionality</span></span>
-<span id="cb18-3"><a href=""></a><span class="co">## elevations and reductions on the input and output</span></span>
-<span id="cb18-4"><a href=""></a><span class="kw">def</span> comp_conv2d(conv2d, X):</span>
-<span id="cb18-5"><a href=""></a>    <span class="co">## (1, 1) indicates that batch size and the number of channels are both 1</span></span>
-<span id="cb18-6"><a href=""></a>    X <span class="op">=</span> X.reshape((<span class="dv">1</span>, <span class="dv">1</span>) <span class="op">+</span> X.shape)</span>
-<span id="cb18-7"><a href=""></a>    Y <span class="op">=</span> conv2d(X)</span>
-<span id="cb18-8"><a href=""></a>    <span class="co">## Strip the first two dimensions: examples and channels</span></span>
-<span id="cb18-9"><a href=""></a>    <span class="cf">return</span> Y.reshape(Y.shape[<span class="dv">2</span>:])</span>
-<span id="cb18-10"><a href=""></a></span>
-<span id="cb18-11"><a href=""></a><span class="co">## 1 row and column is padded on either side, so a total of 2 rows or columns</span></span>
-<span id="cb18-12"><a href=""></a><span class="co">## are added</span></span>
-<span id="cb18-13"><a href=""></a>conv2d <span class="op">=</span> nn.LazyConv2d(<span class="dv">1</span>, kernel_size<span class="op">=</span><span class="dv">3</span>, padding<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb18-14"><a href=""></a>X <span class="op">=</span> torch.rand(size<span class="op">=</span>(<span class="dv">8</span>, <span class="dv">8</span>))</span>
-<span id="cb18-15"><a href=""></a>comp_conv2d(conv2d, X).shape</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="12">
+<div id="323d0581" class="cell" data-execution_count="12">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href=""></a><span class="co">## We define a helper function to calculate convolutions. It initializes the</span></span>
+<span id="cb17-2"><a href=""></a><span class="co">## convolutional layer weights and performs corresponding dimensionality</span></span>
+<span id="cb17-3"><a href=""></a><span class="co">## elevations and reductions on the input and output</span></span>
+<span id="cb17-4"><a href=""></a><span class="kw">def</span> comp_conv2d(conv2d, X):</span>
+<span id="cb17-5"><a href=""></a>    <span class="co">## (1, 1) indicates that batch size and the number of channels are both 1</span></span>
+<span id="cb17-6"><a href=""></a>    X <span class="op">=</span> X.reshape((<span class="dv">1</span>, <span class="dv">1</span>) <span class="op">+</span> X.shape)</span>
+<span id="cb17-7"><a href=""></a>    Y <span class="op">=</span> conv2d(X)</span>
+<span id="cb17-8"><a href=""></a>    <span class="co">## Strip the first two dimensions: examples and channels</span></span>
+<span id="cb17-9"><a href=""></a>    <span class="cf">return</span> Y.reshape(Y.shape[<span class="dv">2</span>:])</span>
+<span id="cb17-10"><a href=""></a></span>
+<span id="cb17-11"><a href=""></a><span class="co">## 1 row and column is padded on either side, so a total of 2 rows or columns</span></span>
+<span id="cb17-12"><a href=""></a><span class="co">## are added</span></span>
+<span id="cb17-13"><a href=""></a>conv2d <span class="op">=</span> nn.LazyConv2d(<span class="dv">1</span>, kernel_size<span class="op">=</span><span class="dv">3</span>, padding<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb17-14"><a href=""></a>X <span class="op">=</span> torch.rand(size<span class="op">=</span>(<span class="dv">8</span>, <span class="dv">8</span>))</span>
+<span id="cb17-15"><a href=""></a>comp_conv2d(conv2d, X).shape</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="354">
 <pre><code>torch.Size([8, 8])</code></pre>
 </div>
 </div>
 <ul>
 <li>when the height and width of the convolution kernel are different, we can make the output and input have the same height and width by [<strong>setting different padding numbers for height and width.</strong>]</li>
 </ul>
-<div id="96a329d6" class="cell" data-execution_count="13">
-<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href=""></a><span class="co">## We use a convolution kernel with height 5 and width 3. The padding on either</span></span>
-<span id="cb20-2"><a href=""></a><span class="co">## side of the height and width are 2 and 1, respectively</span></span>
-<span id="cb20-3"><a href=""></a>conv2d <span class="op">=</span> nn.LazyConv2d(<span class="dv">1</span>, kernel_size<span class="op">=</span>(<span class="dv">5</span>, <span class="dv">3</span>), padding<span class="op">=</span>(<span class="dv">2</span>, <span class="dv">1</span>))</span>
-<span id="cb20-4"><a href=""></a>comp_conv2d(conv2d, X).shape</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="13">
+<div id="0f76c777" class="cell" data-execution_count="13">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href=""></a><span class="co">## We use a convolution kernel with height 5 and width 3. The padding on either</span></span>
+<span id="cb19-2"><a href=""></a><span class="co">## side of the height and width are 2 and 1, respectively</span></span>
+<span id="cb19-3"><a href=""></a>conv2d <span class="op">=</span> nn.LazyConv2d(<span class="dv">1</span>, kernel_size<span class="op">=</span>(<span class="dv">5</span>, <span class="dv">3</span>), padding<span class="op">=</span>(<span class="dv">2</span>, <span class="dv">1</span>))</span>
+<span id="cb19-4"><a href=""></a>comp_conv2d(conv2d, X).shape</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="355">
 <pre><code>torch.Size([8, 8])</code></pre>
 </div>
 </div>
@@ -1109,20 +995,20 @@ epoch 10, loss 0.011</code></pre>
 </section>
 <section class="slide level2">
 
-<div id="04850be9" class="cell" data-execution_count="14">
-<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href=""></a>conv2d <span class="op">=</span> nn.LazyConv2d(<span class="dv">1</span>, kernel_size<span class="op">=</span><span class="dv">3</span>, padding<span class="op">=</span><span class="dv">1</span>, stride<span class="op">=</span><span class="dv">2</span>)</span>
-<span id="cb22-2"><a href=""></a>comp_conv2d(conv2d, X).shape</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="14">
+<div id="32c929e7" class="cell" data-execution_count="14">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href=""></a>conv2d <span class="op">=</span> nn.LazyConv2d(<span class="dv">1</span>, kernel_size<span class="op">=</span><span class="dv">3</span>, padding<span class="op">=</span><span class="dv">1</span>, stride<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb21-2"><a href=""></a>comp_conv2d(conv2d, X).shape</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="356">
 <pre><code>torch.Size([4, 4])</code></pre>
 </div>
 </div>
 <ul>
 <li>Let’s look at (<strong>a slightly more complicated example</strong>).</li>
 </ul>
-<div id="7e505764" class="cell" data-execution_count="15">
-<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href=""></a>conv2d <span class="op">=</span> nn.LazyConv2d(<span class="dv">1</span>, kernel_size<span class="op">=</span>(<span class="dv">3</span>, <span class="dv">5</span>), padding<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>), stride<span class="op">=</span>(<span class="dv">3</span>, <span class="dv">4</span>))</span>
-<span id="cb24-2"><a href=""></a>comp_conv2d(conv2d, X).shape</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="15">
+<div id="66789ec7" class="cell" data-execution_count="15">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href=""></a>conv2d <span class="op">=</span> nn.LazyConv2d(<span class="dv">1</span>, kernel_size<span class="op">=</span>(<span class="dv">3</span>, <span class="dv">5</span>), padding<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>), stride<span class="op">=</span>(<span class="dv">3</span>, <span class="dv">4</span>))</span>
+<span id="cb23-2"><a href=""></a>comp_conv2d(conv2d, X).shape</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="357">
 <pre><code>torch.Size([2, 2])</code></pre>
 </div>
 </div>
@@ -1165,50 +1051,31 @@ epoch 10, loss 0.011</code></pre>
 <li>This allowed us to think of our inputs, convolution kernels, and outputs each as two-dimensional tensors.</li>
 <li>When we add channels into the mix, our inputs and hidden representations both become three-dimensional tensors. For example, each RGB input image has shape <span class="math inline">\(3\times h\times w\)</span>. We refer to this axis, with a size of 3, as the <em>channel</em> dimension. The notion of channels is as old as CNNs themselves. For instance LeNet5 :cite:<code>LeCun.Jackel.Bottou.ea.1995</code> uses them. In this section, we will take a deeper look at convolution kernels with multiple input and multiple output channels.</li>
 </ul>
-<div id="7b8cdbe3" class="cell" data-execution_count="16">
-<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href=""></a><span class="im">from</span> d2l <span class="im">import</span> torch <span class="im">as</span> d2l</span>
-<span id="cb26-2"><a href=""></a><span class="im">import</span> torch</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="46d86948" class="cell" data-execution_count="16">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href=""></a><span class="im">from</span> d2l <span class="im">import</span> torch <span class="im">as</span> d2l</span>
+<span id="cb25-2"><a href=""></a><span class="im">import</span> torch</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="multiple-input-channels" class="slide level2">
 <h2>Multiple Input Channels</h2>
 <ul>
-<li>When the input data contains multiple channels, we need to construct a convolution kernel with the same number of input channels as the input data, so that it can perform cross-correlation with the input data.</li>
-<li>Assuming that the number of channels for the input data is <span class="math inline">\(c_i\)</span>, the number of input channels of the convolution kernel also needs to be <span class="math inline">\(c_i\)</span>. If our convolution kernel’s window shape is <span class="math inline">\(k_h\times k_w\)</span>, then when <span class="math inline">\(c_i=1\)</span>, we can think of our convolution kernel as just a two-dimensional tensor of shape <span class="math inline">\(k_h\times k_w\)</span>.</li>
-<li>However, when <span class="math inline">\(c_i&gt;1\)</span>, we need a kernel that contains a tensor of shape <span class="math inline">\(k_h\times k_w\)</span> for <em>every</em> input channel. Concatenating these <span class="math inline">\(c_i\)</span> tensors together yields a convolution kernel of shape <span class="math inline">\(c_i\times  _h\times k_w\)</span>.</li>
-<li>Since the input and convolution kernel each have <span class="math inline">\(c_i\)</span> channels, we can perform a cross-correlation operation on the two-dimensional tensor of the input and the two-dimensional tensor of the convolution kernel for each channel, adding the <span class="math inline">\(c_i\)</span> results together (summing over the channels) to yield a two-dimensional tensor.</li>
-<li>This is the result of a two-dimensional cross-correlation between a multi-channel input and a multi-input-channel convolution kernel.</li>
+<li>When the input data contains multiple channels, we need to construct a convolution kernel with the same number of input channels as the input data.</li>
+<li>For input data with <span class="math inline">\(c_i\)</span> channels, the convolution kernel needs <span class="math inline">\(c_i\)</span> channels, with shape <span class="math inline">\(c_i\times k_h\times k_w\)</span>.</li>
+<li>The output is computed by performing cross-correlation on each channel and summing the results.</li>
 </ul>
-</section>
-<section class="slide level2">
-
-<ul>
-<li>:numref:<code>fig_conv_multi_in</code> provides an example of a two-dimensional cross-correlation with two input channels. The shaded portions are the first output element as well as the input and kernel tensor elements used for the output computation:</li>
-<li><span class="math inline">\((1\times1+2\times2+4\times3+5\times4)+(0\times0+1\times1+3\times2+4\times3)=56\)</span>.</li>
-</ul>
-<p><img data-src="../img/conv-multi-in.svg" alt="Cross-correlation computation with 2 input channels."> :label:<code>fig_conv_multi_in</code></p>
-<ul>
-<li>To make sure we really understand what is going on here, we can (<strong>implement cross-correlation operations with multiple input channels</strong>) ourselves.</li>
-<li>Notice that all we are doing is performing a cross-correlation operation per channel and then adding up the results.</li>
-</ul>
-<div id="e8c9e661" class="cell" data-execution_count="17">
-<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href=""></a><span class="kw">def</span> corr2d_multi_in(X, K):</span>
-<span id="cb27-2"><a href=""></a>    <span class="co">## Iterate through the 0th dimension (channel) of K first, then add them up</span></span>
-<span id="cb27-3"><a href=""></a>    <span class="cf">return</span> <span class="bu">sum</span>(d2l.corr2d(x, k) <span class="cf">for</span> x, k <span class="kw">in</span> <span class="bu">zip</span>(X, K))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="a5990b88" class="cell" data-execution_count="17">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href=""></a><span class="kw">def</span> corr2d_multi_in(X, K):</span>
+<span id="cb26-2"><a href=""></a>    <span class="co">## Iterate through the 0th dimension (channel) of K first, then add them up</span></span>
+<span id="cb26-3"><a href=""></a>    <span class="cf">return</span> <span class="bu">sum</span>(d2l.corr2d(x, k) <span class="cf">for</span> x, k <span class="kw">in</span> <span class="bu">zip</span>(X, K))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-</section>
-<section class="slide level2">
-
-<ul>
-<li>can construct the input tensor <code>X</code> and the kernel tensor <code>K</code> corresponding to the values in :numref:<code>fig_conv_multi_in</code> to (<strong>validate the output</strong>) of the cross-correlation operation.</li>
-</ul>
-<div id="98b5fde0" class="cell" data-execution_count="18">
-<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href=""></a>X <span class="op">=</span> d2l.tensor([[[<span class="fl">0.0</span>, <span class="fl">1.0</span>, <span class="fl">2.0</span>], [<span class="fl">3.0</span>, <span class="fl">4.0</span>, <span class="fl">5.0</span>], [<span class="fl">6.0</span>, <span class="fl">7.0</span>, <span class="fl">8.0</span>]],</span>
-<span id="cb28-2"><a href=""></a>               [[<span class="fl">1.0</span>, <span class="fl">2.0</span>, <span class="fl">3.0</span>], [<span class="fl">4.0</span>, <span class="fl">5.0</span>, <span class="fl">6.0</span>], [<span class="fl">7.0</span>, <span class="fl">8.0</span>, <span class="fl">9.0</span>]]])</span>
-<span id="cb28-3"><a href=""></a>K <span class="op">=</span> d2l.tensor([[[<span class="fl">0.0</span>, <span class="fl">1.0</span>], [<span class="fl">2.0</span>, <span class="fl">3.0</span>]], [[<span class="fl">1.0</span>, <span class="fl">2.0</span>], [<span class="fl">3.0</span>, <span class="fl">4.0</span>]]])</span>
-<span id="cb28-4"><a href=""></a></span>
-<span id="cb28-5"><a href=""></a>corr2d_multi_in(X, K)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="18">
+<p>We can validate this with an example:</p>
+<div id="ec3e8885" class="cell" data-execution_count="18">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href=""></a>X <span class="op">=</span> d2l.tensor([[[<span class="fl">0.0</span>, <span class="fl">1.0</span>, <span class="fl">2.0</span>], [<span class="fl">3.0</span>, <span class="fl">4.0</span>, <span class="fl">5.0</span>], [<span class="fl">6.0</span>, <span class="fl">7.0</span>, <span class="fl">8.0</span>]],</span>
+<span id="cb27-2"><a href=""></a>               [[<span class="fl">1.0</span>, <span class="fl">2.0</span>, <span class="fl">3.0</span>], [<span class="fl">4.0</span>, <span class="fl">5.0</span>, <span class="fl">6.0</span>], [<span class="fl">7.0</span>, <span class="fl">8.0</span>, <span class="fl">9.0</span>]]])</span>
+<span id="cb27-3"><a href=""></a>K <span class="op">=</span> d2l.tensor([[[<span class="fl">0.0</span>, <span class="fl">1.0</span>], [<span class="fl">2.0</span>, <span class="fl">3.0</span>]], [[<span class="fl">1.0</span>, <span class="fl">2.0</span>], [<span class="fl">3.0</span>, <span class="fl">4.0</span>]]])</span>
+<span id="cb27-4"><a href=""></a></span>
+<span id="cb27-5"><a href=""></a>corr2d_multi_in(X, K)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="360">
 <pre><code>tensor([[ 56.,  72.],
         [104., 120.]])</code></pre>
 </div>
@@ -1217,45 +1084,28 @@ epoch 10, loss 0.011</code></pre>
 <section id="multiple-output-channels" class="slide level2">
 <h2>Multiple Output Channels</h2>
 <ul>
-<li>Regardless of the number of input channels, so far we always ended up with one output channel. However, as we discussed in :numref:<code>subsec_why-conv-channels</code>, it turns out to be essential to have multiple channels at each layer. In the most popular neural network architectures, we actually increase the channel dimension as we go deeper in the neural network, typically downsampling to trade off spatial resolution for greater <em>channel depth</em>.</li>
-<li>Intuitively, could think of each channel as responding to a different set of features.</li>
-<li>reality is a bit more complicated than this. naive interpretation would suggest that representations are learned independently per pixel or per channel.</li>
-<li>Instead, channels are optimized to be jointly useful. This means that rather than mapping a single channel to an edge detector, it may simply mean that some direction in channel space corresponds to detecting edges.</li>
+<li>Regardless of the number of input channels, so far we always ended up with one output channel. However, as we discussed in :numref:<code>subsec_why-conv-channels</code>, it turns out to be essential to have multiple channels at each layer.</li>
 <li>Denote by <span class="math inline">\(c_i\)</span> and <span class="math inline">\(c_o\)</span> the number of input and output channels, respectively, and let <span class="math inline">\(k_h\)</span> and <span class="math inline">\(k_w\)</span> be the height and width of the kernel. To get an output with multiple channels, we can create a kernel tensor of shape <span class="math inline">\(c_i\times k_h\times k_w\)</span> for <em>every</em> output channel.</li>
+<li>We concatenate them on the output channel dimension, so that the shape of the convolution kernel is <span class="math inline">\(c_o\times c_i\times k_h\times k_w\)</span>.</li>
 </ul>
-</section>
-<section class="slide level2">
-
-<ul>
-<li>concatenate them on the output channel dimension, so that the shape of the convolution kernel is <span class="math inline">\(c_o\times c_i\times k_h\times k_w\)</span>. In cross-correlation operations, the result on each output channel is calculated from the convolution kernel corresponding to that output channel and takes input from all channels in the input tensor.</li>
-<li>implement a cross-correlation function to [<strong>calculate the output of multiple channels</strong>] as shown below.</li>
-</ul>
-<div id="484e7c5c" class="cell" data-execution_count="19">
-<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href=""></a><span class="kw">def</span> corr2d_multi_in_out(X, K):</span>
-<span id="cb30-2"><a href=""></a>    <span class="co">## Iterate through the 0th dimension of K, and each time, perform</span></span>
-<span id="cb30-3"><a href=""></a>    <span class="co">## cross-correlation operations with input X. All of the results are</span></span>
-<span id="cb30-4"><a href=""></a>    <span class="co">## stacked together</span></span>
-<span id="cb30-5"><a href=""></a>    <span class="cf">return</span> d2l.stack([corr2d_multi_in(X, k) <span class="cf">for</span> k <span class="kw">in</span> K], <span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="ce01a72f" class="cell" data-execution_count="19">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href=""></a><span class="kw">def</span> corr2d_multi_in_out(X, K):</span>
+<span id="cb29-2"><a href=""></a>    <span class="co">## Iterate through the 0th dimension of K, and each time, perform</span></span>
+<span id="cb29-3"><a href=""></a>    <span class="co">## cross-correlation operations with input X. All of the results are</span></span>
+<span id="cb29-4"><a href=""></a>    <span class="co">## stacked together</span></span>
+<span id="cb29-5"><a href=""></a>    <span class="cf">return</span> d2l.stack([corr2d_multi_in(X, k) <span class="cf">for</span> k <span class="kw">in</span> K], <span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<ul>
-<li>We construct a trivial convolution kernel with 3 output channels by concatenating the kernel tensor for <code>K</code> with <code>K+1</code> and <code>K+2</code>.</li>
-</ul>
-<div id="7768defa" class="cell" data-execution_count="20">
-<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href=""></a>K <span class="op">=</span> d2l.stack((K, K <span class="op">+</span> <span class="dv">1</span>, K <span class="op">+</span> <span class="dv">2</span>), <span class="dv">0</span>)</span>
-<span id="cb31-2"><a href=""></a>K.shape</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="20">
+<div id="08eb9f1a" class="cell" data-execution_count="20">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href=""></a>K <span class="op">=</span> d2l.stack((K, K <span class="op">+</span> <span class="dv">1</span>, K <span class="op">+</span> <span class="dv">2</span>), <span class="dv">0</span>)</span>
+<span id="cb30-2"><a href=""></a>K.shape</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="362">
 <pre><code>torch.Size([3, 2, 2, 2])</code></pre>
 </div>
 </div>
-</section>
-<section class="slide level2">
-
-<ul>
-<li>Below, we perform cross-correlation operations on the input tensor <code>X</code> with the kernel tensor <code>K</code>. Now the output contains 3 channels. The result of the first channel is consistent with the result of the previous input tensor <code>X</code> and the multi-input channel, single-output channel kernel.</li>
-</ul>
-<div id="accb5944" class="cell" data-execution_count="21">
-<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href=""></a>corr2d_multi_in_out(X, K)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="21">
+<p>Below, we perform cross-correlation operations on the input tensor <code>X</code> with the kernel tensor <code>K</code>. Now the output contains 3 channels.</p>
+<div id="aa900d0f" class="cell" data-execution_count="21">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href=""></a>corr2d_multi_in_out(X, K)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="363">
 <pre><code>tensor([[[ 56.,  72.],
          [104., 120.]],
 
@@ -1291,25 +1141,25 @@ epoch 10, loss 0.011</code></pre>
 </section>
 <section class="slide level2">
 
-<div id="7456d7cb" class="cell" data-execution_count="22">
-<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href=""></a><span class="kw">def</span> corr2d_multi_in_out_1x1(X, K):</span>
-<span id="cb35-2"><a href=""></a>    c_i, h, w <span class="op">=</span> X.shape</span>
-<span id="cb35-3"><a href=""></a>    c_o <span class="op">=</span> K.shape[<span class="dv">0</span>]</span>
-<span id="cb35-4"><a href=""></a>    X <span class="op">=</span> d2l.reshape(X, (c_i, h <span class="op">*</span> w))</span>
-<span id="cb35-5"><a href=""></a>    K <span class="op">=</span> d2l.reshape(K, (c_o, c_i))</span>
-<span id="cb35-6"><a href=""></a>    <span class="co">## Matrix multiplication in the fully connected layer</span></span>
-<span id="cb35-7"><a href=""></a>    Y <span class="op">=</span> d2l.matmul(K, X)</span>
-<span id="cb35-8"><a href=""></a>    <span class="cf">return</span> d2l.reshape(Y, (c_o, h, w))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="5f426a0f" class="cell" data-execution_count="22">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href=""></a><span class="kw">def</span> corr2d_multi_in_out_1x1(X, K):</span>
+<span id="cb34-2"><a href=""></a>    c_i, h, w <span class="op">=</span> X.shape</span>
+<span id="cb34-3"><a href=""></a>    c_o <span class="op">=</span> K.shape[<span class="dv">0</span>]</span>
+<span id="cb34-4"><a href=""></a>    X <span class="op">=</span> d2l.reshape(X, (c_i, h <span class="op">*</span> w))</span>
+<span id="cb34-5"><a href=""></a>    K <span class="op">=</span> d2l.reshape(K, (c_o, c_i))</span>
+<span id="cb34-6"><a href=""></a>    <span class="co">## Matrix multiplication in the fully connected layer</span></span>
+<span id="cb34-7"><a href=""></a>    Y <span class="op">=</span> d2l.matmul(K, X)</span>
+<span id="cb34-8"><a href=""></a>    <span class="cf">return</span> d2l.reshape(Y, (c_o, h, w))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <ul>
 <li>When performing <span class="math inline">\(1\times 1\)</span> convolutions, the above function is equivalent to the previously implemented cross-correlation function <code>corr2d_multi_in_out</code>. Let’s check this with some sample data.</li>
 </ul>
-<div id="8fe6ee61" class="cell" data-execution_count="23">
-<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href=""></a>X <span class="op">=</span> d2l.normal(<span class="dv">0</span>, <span class="dv">1</span>, (<span class="dv">3</span>, <span class="dv">3</span>, <span class="dv">3</span>))</span>
-<span id="cb36-2"><a href=""></a>K <span class="op">=</span> d2l.normal(<span class="dv">0</span>, <span class="dv">1</span>, (<span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">1</span>, <span class="dv">1</span>))</span>
-<span id="cb36-3"><a href=""></a>Y1 <span class="op">=</span> corr2d_multi_in_out_1x1(X, K)</span>
-<span id="cb36-4"><a href=""></a>Y2 <span class="op">=</span> corr2d_multi_in_out(X, K)</span>
-<span id="cb36-5"><a href=""></a><span class="cf">assert</span> <span class="bu">float</span>(d2l.reduce_sum(d2l.<span class="bu">abs</span>(Y1 <span class="op">-</span> Y2))) <span class="op">&lt;</span> <span class="fl">1e-6</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="4fcaf640" class="cell" data-execution_count="23">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href=""></a>X <span class="op">=</span> d2l.normal(<span class="dv">0</span>, <span class="dv">1</span>, (<span class="dv">3</span>, <span class="dv">3</span>, <span class="dv">3</span>))</span>
+<span id="cb35-2"><a href=""></a>K <span class="op">=</span> d2l.normal(<span class="dv">0</span>, <span class="dv">1</span>, (<span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">1</span>, <span class="dv">1</span>))</span>
+<span id="cb35-3"><a href=""></a>Y1 <span class="op">=</span> corr2d_multi_in_out_1x1(X, K)</span>
+<span id="cb35-4"><a href=""></a>Y2 <span class="op">=</span> corr2d_multi_in_out(X, K)</span>
+<span id="cb35-5"><a href=""></a><span class="cf">assert</span> <span class="bu">float</span>(d2l.reduce_sum(d2l.<span class="bu">abs</span>(Y1 <span class="op">-</span> Y2))) <span class="op">&lt;</span> <span class="fl">1e-6</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="discussion" class="slide level2">
@@ -1371,10 +1221,10 @@ epoch 10, loss 0.011</code></pre>
 <li>The edge will have shifted by one pixel. In reality, objects hardly ever occur exactly at the same place. In fact, even with a tripod and a stationary object, vibration of the camera due to the movement of the shutter might shift everything by a pixel or so (high-end cameras are loaded with special features to address this problem).</li>
 <li>This section introduces <em>pooling layers</em>, which serve the dual purposes of mitigating the sensitivity of convolutional layers to location and of spatially downsampling representations.</li>
 </ul>
-<div id="27c8586b" class="cell" data-execution_count="24">
-<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href=""></a><span class="im">from</span> d2l <span class="im">import</span> torch <span class="im">as</span> d2l</span>
-<span id="cb37-2"><a href=""></a><span class="im">import</span> torch</span>
-<span id="cb37-3"><a href=""></a><span class="im">from</span> torch <span class="im">import</span> nn</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="6ae6ead3" class="cell" data-execution_count="24">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href=""></a><span class="im">from</span> d2l <span class="im">import</span> torch <span class="im">as</span> d2l</span>
+<span id="cb36-2"><a href=""></a><span class="im">import</span> torch</span>
+<span id="cb36-3"><a href=""></a><span class="im">from</span> torch <span class="im">import</span> nn</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="maximum-pooling-and-average-pooling" class="slide level2">
@@ -1424,25 +1274,25 @@ epoch 10, loss 0.011</code></pre>
 <ul>
 <li>However, no kernel is needed, computing the output as either the maximum or the average of each region in the input.</li>
 </ul>
-<div id="1782cc5d" class="cell" data-execution_count="25">
-<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href=""></a><span class="kw">def</span> pool2d(X, pool_size, mode<span class="op">=</span><span class="st">'max'</span>):</span>
-<span id="cb38-2"><a href=""></a>    p_h, p_w <span class="op">=</span> pool_size</span>
-<span id="cb38-3"><a href=""></a>    Y <span class="op">=</span> d2l.zeros((X.shape[<span class="dv">0</span>] <span class="op">-</span> p_h <span class="op">+</span> <span class="dv">1</span>, X.shape[<span class="dv">1</span>] <span class="op">-</span> p_w <span class="op">+</span> <span class="dv">1</span>))</span>
-<span id="cb38-4"><a href=""></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(Y.shape[<span class="dv">0</span>]):</span>
-<span id="cb38-5"><a href=""></a>        <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(Y.shape[<span class="dv">1</span>]):</span>
-<span id="cb38-6"><a href=""></a>            <span class="cf">if</span> mode <span class="op">==</span> <span class="st">'max'</span>:</span>
-<span id="cb38-7"><a href=""></a>                Y[i, j] <span class="op">=</span> X[i: i <span class="op">+</span> p_h, j: j <span class="op">+</span> p_w].<span class="bu">max</span>()</span>
-<span id="cb38-8"><a href=""></a>            <span class="cf">elif</span> mode <span class="op">==</span> <span class="st">'avg'</span>:</span>
-<span id="cb38-9"><a href=""></a>                Y[i, j] <span class="op">=</span> X[i: i <span class="op">+</span> p_h, j: j <span class="op">+</span> p_w].mean()</span>
-<span id="cb38-10"><a href=""></a>    <span class="cf">return</span> Y</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="04dddb3e" class="cell" data-execution_count="25">
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href=""></a><span class="kw">def</span> pool2d(X, pool_size, mode<span class="op">=</span><span class="st">'max'</span>):</span>
+<span id="cb37-2"><a href=""></a>    p_h, p_w <span class="op">=</span> pool_size</span>
+<span id="cb37-3"><a href=""></a>    Y <span class="op">=</span> d2l.zeros((X.shape[<span class="dv">0</span>] <span class="op">-</span> p_h <span class="op">+</span> <span class="dv">1</span>, X.shape[<span class="dv">1</span>] <span class="op">-</span> p_w <span class="op">+</span> <span class="dv">1</span>))</span>
+<span id="cb37-4"><a href=""></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(Y.shape[<span class="dv">0</span>]):</span>
+<span id="cb37-5"><a href=""></a>        <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(Y.shape[<span class="dv">1</span>]):</span>
+<span id="cb37-6"><a href=""></a>            <span class="cf">if</span> mode <span class="op">==</span> <span class="st">'max'</span>:</span>
+<span id="cb37-7"><a href=""></a>                Y[i, j] <span class="op">=</span> X[i: i <span class="op">+</span> p_h, j: j <span class="op">+</span> p_w].<span class="bu">max</span>()</span>
+<span id="cb37-8"><a href=""></a>            <span class="cf">elif</span> mode <span class="op">==</span> <span class="st">'avg'</span>:</span>
+<span id="cb37-9"><a href=""></a>                Y[i, j] <span class="op">=</span> X[i: i <span class="op">+</span> p_h, j: j <span class="op">+</span> p_w].mean()</span>
+<span id="cb37-10"><a href=""></a>    <span class="cf">return</span> Y</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <ul>
 <li>can construct the input tensor <code>X</code> in :numref:<code>fig_pooling</code> to [<strong>validate the output of the two-dimensional max-pooling layer</strong>].</li>
 </ul>
-<div id="b46145e7" class="cell" data-execution_count="26">
-<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href=""></a>X <span class="op">=</span> d2l.tensor([[<span class="fl">0.0</span>, <span class="fl">1.0</span>, <span class="fl">2.0</span>], [<span class="fl">3.0</span>, <span class="fl">4.0</span>, <span class="fl">5.0</span>], [<span class="fl">6.0</span>, <span class="fl">7.0</span>, <span class="fl">8.0</span>]])</span>
-<span id="cb39-2"><a href=""></a>pool2d(X, (<span class="dv">2</span>, <span class="dv">2</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="26">
+<div id="c2cc7d85" class="cell" data-execution_count="26">
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href=""></a>X <span class="op">=</span> d2l.tensor([[<span class="fl">0.0</span>, <span class="fl">1.0</span>, <span class="fl">2.0</span>], [<span class="fl">3.0</span>, <span class="fl">4.0</span>, <span class="fl">5.0</span>], [<span class="fl">6.0</span>, <span class="fl">7.0</span>, <span class="fl">8.0</span>]])</span>
+<span id="cb38-2"><a href=""></a>pool2d(X, (<span class="dv">2</span>, <span class="dv">2</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="368">
 <pre><code>tensor([[4., 5.],
         [7., 8.]])</code></pre>
 </div>
@@ -1450,9 +1300,9 @@ epoch 10, loss 0.011</code></pre>
 <ul>
 <li>Also, we experiment with (<strong>the average pooling layer</strong>).</li>
 </ul>
-<div id="62a56d93" class="cell" data-execution_count="27">
-<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href=""></a>pool2d(X, (<span class="dv">2</span>, <span class="dv">2</span>), <span class="st">'avg'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="27">
+<div id="81f91e86" class="cell" data-execution_count="27">
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href=""></a>pool2d(X, (<span class="dv">2</span>, <span class="dv">2</span>), <span class="st">'avg'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="369">
 <pre><code>tensor([[2., 3.],
         [5., 6.]])</code></pre>
 </div>
@@ -1465,10 +1315,10 @@ epoch 10, loss 0.011</code></pre>
 <li>We can demonstrate the use of padding and strides in pooling layers via the built-in two-dimensional max-pooling layer from the deep learning framework.</li>
 <li>We first construct an input tensor <code>X</code> whose shape has four dimensions, where the number of examples (batch size) and number of channels are both 1.</li>
 </ul>
-<div id="64b53223" class="cell" data-execution_count="28">
-<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href=""></a>X <span class="op">=</span> d2l.reshape(d2l.arange(<span class="dv">16</span>, dtype<span class="op">=</span>d2l.float32), (<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">4</span>, <span class="dv">4</span>))</span>
-<span id="cb43-2"><a href=""></a>X</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="28">
+<div id="baf86571" class="cell" data-execution_count="28">
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href=""></a>X <span class="op">=</span> d2l.reshape(d2l.arange(<span class="dv">16</span>, dtype<span class="op">=</span>d2l.float32), (<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">4</span>, <span class="dv">4</span>))</span>
+<span id="cb42-2"><a href=""></a>X</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="370">
 <pre><code>tensor([[[[ 0.,  1.,  2.,  3.],
           [ 4.,  5.,  6.,  7.],
           [ 8.,  9., 10., 11.],
@@ -1481,21 +1331,21 @@ epoch 10, loss 0.011</code></pre>
 <ul>
 <li>pooling aggregates information from an area, (<strong>deep learning frameworks default to matching pooling window sizes and stride.</strong>) For instance, if we use a pooling window of shape <code>(3, 3)</code> we get a stride shape of <code>(3, 3)</code> by default.</li>
 </ul>
-<div id="75c96ef1" class="cell" data-execution_count="29">
-<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href=""></a>pool2d <span class="op">=</span> nn.MaxPool2d(<span class="dv">3</span>)</span>
-<span id="cb45-2"><a href=""></a><span class="co">## Pooling has no model parameters, hence it needs no initialization</span></span>
-<span id="cb45-3"><a href=""></a>pool2d(X)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="29">
+<div id="3abe5818" class="cell" data-execution_count="29">
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href=""></a>pool2d <span class="op">=</span> nn.MaxPool2d(<span class="dv">3</span>)</span>
+<span id="cb44-2"><a href=""></a><span class="co">## Pooling has no model parameters, hence it needs no initialization</span></span>
+<span id="cb44-3"><a href=""></a>pool2d(X)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="371">
 <pre><code>tensor([[[[10.]]]])</code></pre>
 </div>
 </div>
 <ul>
 <li>as expected, [<strong>the stride and padding can be manually specified</strong>] to override framework defaults if needed.</li>
 </ul>
-<div id="28e9bee6" class="cell" data-execution_count="30">
-<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href=""></a>pool2d <span class="op">=</span> nn.MaxPool2d(<span class="dv">3</span>, padding<span class="op">=</span><span class="dv">1</span>, stride<span class="op">=</span><span class="dv">2</span>)</span>
-<span id="cb47-2"><a href=""></a>pool2d(X)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="30">
+<div id="2076c253" class="cell" data-execution_count="30">
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href=""></a>pool2d <span class="op">=</span> nn.MaxPool2d(<span class="dv">3</span>, padding<span class="op">=</span><span class="dv">1</span>, stride<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb46-2"><a href=""></a>pool2d(X)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="372">
 <pre><code>tensor([[[[ 5.,  7.],
           [13., 15.]]]])</code></pre>
 </div>
@@ -1504,10 +1354,10 @@ epoch 10, loss 0.011</code></pre>
 <section class="slide level2">
 
 <p>Of course, we can specify an arbitrary rectangular pooling window with arbitrary height and width respectively, as the example below shows.</p>
-<div id="44837f03" class="cell" data-execution_count="31">
-<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href=""></a>pool2d <span class="op">=</span> nn.MaxPool2d((<span class="dv">2</span>, <span class="dv">3</span>), stride<span class="op">=</span>(<span class="dv">2</span>, <span class="dv">3</span>), padding<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>))</span>
-<span id="cb49-2"><a href=""></a>pool2d(X)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="31">
+<div id="174266b1" class="cell" data-execution_count="31">
+<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href=""></a>pool2d <span class="op">=</span> nn.MaxPool2d((<span class="dv">2</span>, <span class="dv">3</span>), stride<span class="op">=</span>(<span class="dv">2</span>, <span class="dv">3</span>), padding<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>))</span>
+<span id="cb48-2"><a href=""></a>pool2d(X)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="373">
 <pre><code>tensor([[[[ 5.,  7.],
           [13., 15.]]]])</code></pre>
 </div>
@@ -1519,10 +1369,10 @@ epoch 10, loss 0.011</code></pre>
 <li>When processing multi-channel input data, [<strong>the pooling layer pools each input channel separately</strong>], rather than summing the inputs up over channels as in a convolutional layer.</li>
 <li>This means that the number of output channels for the pooling layer is the same as the number of input channels. Below, we will concatenate tensors <code>X</code> and <code>X + 1</code> on the channel dimension to construct an input with 2 channels.</li>
 </ul>
-<div id="2796fd73" class="cell" data-execution_count="32">
-<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb51-1"><a href=""></a>X <span class="op">=</span> d2l.concat((X, X <span class="op">+</span> <span class="dv">1</span>), <span class="dv">1</span>)</span>
-<span id="cb51-2"><a href=""></a>X</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="32">
+<div id="44459e74" class="cell" data-execution_count="32">
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a href=""></a>X <span class="op">=</span> d2l.concat((X, X <span class="op">+</span> <span class="dv">1</span>), <span class="dv">1</span>)</span>
+<span id="cb50-2"><a href=""></a>X</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="374">
 <pre><code>tensor([[[[ 0.,  1.,  2.,  3.],
           [ 4.,  5.,  6.,  7.],
           [ 8.,  9., 10., 11.],
@@ -1538,10 +1388,10 @@ epoch 10, loss 0.011</code></pre>
 <section class="slide level2">
 
 <p>As we can see, the number of output channels is still 2 after pooling.</p>
-<div id="6854d9c7" class="cell" data-execution_count="33">
-<div class="sourceCode cell-code" id="cb53"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb53-1"><a href=""></a>pool2d <span class="op">=</span> nn.MaxPool2d(<span class="dv">3</span>, padding<span class="op">=</span><span class="dv">1</span>, stride<span class="op">=</span><span class="dv">2</span>)</span>
-<span id="cb53-2"><a href=""></a>pool2d(X)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="33">
+<div id="3e2cd9ba" class="cell" data-execution_count="33">
+<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb52-1"><a href=""></a>pool2d <span class="op">=</span> nn.MaxPool2d(<span class="dv">3</span>, padding<span class="op">=</span><span class="dv">1</span>, stride<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb52-2"><a href=""></a>pool2d(X)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="375">
 <pre><code>tensor([[[[ 5.,  7.],
           [13., 15.]],
 
@@ -1585,21 +1435,14 @@ epoch 10, loss 0.011</code></pre>
 <section id="convolutional-neural-networks-lenet" class="slide level2">
 <h2>Convolutional Neural Networks (LeNet)</h2>
 <ul>
-<li>We now have all the ingredients required to assemble a fully-functional CNN. In our earlier encounter with image data, we applied a linear model with softmax regression (:numref:<code>sec_softmax_scratch</code>) and an MLP (:numref:<code>sec_mlp-implementation</code>) to pictures of clothing in the Fashion-MNIST dataset. To make such data amenable we first flattened each image from a <span class="math inline">\(28\times28\)</span> matrix into a fixed-length <span class="math inline">\(784\)</span>-dimensional vector, and thereafter processed them in fully connected layers. Now that we have a handle on convolutional layers, we can retain the spatial structure in our images. As an additional benefit of replacing fully connected layers with convolutional layers, we will enjoy more parsimonious models that require far fewer parameters.</li>
-<li>In this section, we will introduce <em>LeNet</em>, among the first published CNNs to capture wide attention for its performance on computer vision tasks. The model was introduced by (and named for) Yann LeCun, then a researcher at AT&amp;T Bell Labs, for the purpose of recognizing handwritten digits in images :cite:<code>LeCun.Bottou.Bengio.ea.1998</code>. This work represented the culmination of a decade of research developing the technology.</li>
+<li>We now have all the ingredients required to assemble a fully-functional CNN. In our earlier encounter with image data, we applied a linear model with softmax regression and an MLP to pictures of clothing in the Fashion-MNIST dataset. To make such data amenable we first flattened each image from a <span class="math inline">\(28\times28\)</span> matrix into a fixed-length <span class="math inline">\(784\)</span>-dimensional vector. Now that we have a handle on convolutional layers, we can retain the spatial structure in our images.</li>
+<li>In this section, we will introduce <em>LeNet</em>, among the first published CNNs to capture wide attention for its performance on computer vision tasks. The model was introduced by (and named for) Yann LeCun, then a researcher at AT&amp;T Bell Labs, for the purpose of recognizing handwritten digits in images :cite:<code>LeCun.Bottou.Bengio.ea.1998</code>.</li>
+<li>LeNet achieved outstanding results matching the performance of support vector machines, achieving an error rate of less than 1% per digit. LeNet was eventually adapted to recognize digits for processing deposits in ATM machines.</li>
 </ul>
-</section>
-<section class="slide level2">
-
-<ul>
-<li>In 1989, LeCun’s team published the first study to successfully train CNNs via backpropagation :cite:<code>LeCun.Boser.Denker.ea.1989</code>.</li>
-<li>At the time LeNet achieved outstanding results matching the performance of support vector machines, then a dominant approach in supervised learning, achieving an error rate of less than 1% per digit.</li>
-<li>LeNet was eventually adapted to recognize digits for processing deposits in ATM machines. To this day, some ATMs still run the code that Yann LeCun and his colleague Leon Bottou wrote in the 1990s!</li>
-</ul>
-<div id="c08a3c5f" class="cell" data-execution_count="34">
-<div class="sourceCode cell-code" id="cb55"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb55-1"><a href=""></a><span class="im">from</span> d2l <span class="im">import</span> torch <span class="im">as</span> d2l</span>
-<span id="cb55-2"><a href=""></a><span class="im">import</span> torch</span>
-<span id="cb55-3"><a href=""></a><span class="im">from</span> torch <span class="im">import</span> nn</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="f2636bf0" class="cell" data-execution_count="34">
+<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb54-1"><a href=""></a><span class="im">from</span> d2l <span class="im">import</span> torch <span class="im">as</span> d2l</span>
+<span id="cb54-2"><a href=""></a><span class="im">import</span> torch</span>
+<span id="cb54-3"><a href=""></a><span class="im">from</span> torch <span class="im">import</span> nn</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="lenet" class="slide level2">
@@ -1615,7 +1458,7 @@ epoch 10, loss 0.011</code></pre>
 <li>The architecture is summarized in :numref:<code>img_lenet</code>.</li>
 </ul>
 
-<img data-src="../img/lenet.svg" data-center="True" width="600" class="r-stretch quarto-figure-center"><p class="caption">Data flow in LeNet. The input is a handwritten digit, the output a probability over 10 possible outcomes.</p></section>
+<img data-src="../img/lenet.svg" data-center="True" data-background-color="white" width="600" class="r-stretch quarto-figure-center"><p class="caption">Data flow in LeNet. The input is a handwritten digit, the output a probability over 10 possible outcomes.</p></section>
 <section class="slide level2">
 
 <ul>
@@ -1634,27 +1477,27 @@ epoch 10, loss 0.011</code></pre>
 </section>
 <section class="slide level2">
 
-<div id="8554fc5d" class="cell" data-execution_count="35">
-<div class="sourceCode cell-code" id="cb56"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb56-1"><a href=""></a><span class="kw">def</span> init_cnn(module):  <span class="co">#@save</span></span>
-<span id="cb56-2"><a href=""></a>    <span class="co">"""Initialize weights for CNNs."""</span></span>
-<span id="cb56-3"><a href=""></a>    <span class="cf">if</span> <span class="bu">type</span>(module) <span class="op">==</span> nn.Linear <span class="kw">or</span> <span class="bu">type</span>(module) <span class="op">==</span> nn.Conv2d:</span>
-<span id="cb56-4"><a href=""></a>        nn.init.xavier_uniform_(module.weight)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="1ee461b6" class="cell" data-execution_count="35">
+<div class="sourceCode cell-code" id="cb55"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb55-1"><a href=""></a><span class="kw">def</span> init_cnn(module):  <span class="co">#@save</span></span>
+<span id="cb55-2"><a href=""></a>    <span class="co">"""Initialize weights for CNNs."""</span></span>
+<span id="cb55-3"><a href=""></a>    <span class="cf">if</span> <span class="bu">type</span>(module) <span class="op">==</span> nn.Linear <span class="kw">or</span> <span class="bu">type</span>(module) <span class="op">==</span> nn.Conv2d:</span>
+<span id="cb55-4"><a href=""></a>        nn.init.xavier_uniform_(module.weight)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="1f6cb332" class="cell" data-execution_count="36">
-<div class="sourceCode cell-code" id="cb57"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb57-1"><a href=""></a><span class="kw">class</span> LeNet(d2l.Classifier):  <span class="co">#@save</span></span>
-<span id="cb57-2"><a href=""></a>    <span class="co">"""The LeNet-5 model."""</span></span>
-<span id="cb57-3"><a href=""></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, lr<span class="op">=</span><span class="fl">0.1</span>, num_classes<span class="op">=</span><span class="dv">10</span>):</span>
-<span id="cb57-4"><a href=""></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
-<span id="cb57-5"><a href=""></a>        <span class="va">self</span>.save_hyperparameters()</span>
-<span id="cb57-6"><a href=""></a>        <span class="va">self</span>.net <span class="op">=</span> nn.Sequential(</span>
-<span id="cb57-7"><a href=""></a>            nn.LazyConv2d(<span class="dv">6</span>, kernel_size<span class="op">=</span><span class="dv">5</span>, padding<span class="op">=</span><span class="dv">2</span>), nn.Sigmoid(),</span>
-<span id="cb57-8"><a href=""></a>            nn.AvgPool2d(kernel_size<span class="op">=</span><span class="dv">2</span>, stride<span class="op">=</span><span class="dv">2</span>),</span>
-<span id="cb57-9"><a href=""></a>            nn.LazyConv2d(<span class="dv">16</span>, kernel_size<span class="op">=</span><span class="dv">5</span>), nn.Sigmoid(),</span>
-<span id="cb57-10"><a href=""></a>            nn.AvgPool2d(kernel_size<span class="op">=</span><span class="dv">2</span>, stride<span class="op">=</span><span class="dv">2</span>),</span>
-<span id="cb57-11"><a href=""></a>            nn.Flatten(),</span>
-<span id="cb57-12"><a href=""></a>            nn.LazyLinear(<span class="dv">120</span>), nn.Sigmoid(),</span>
-<span id="cb57-13"><a href=""></a>            nn.LazyLinear(<span class="dv">84</span>), nn.Sigmoid(),</span>
-<span id="cb57-14"><a href=""></a>            nn.LazyLinear(num_classes))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="48c3da4f" class="cell" data-execution_count="36">
+<div class="sourceCode cell-code" id="cb56"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb56-1"><a href=""></a><span class="kw">class</span> LeNet(d2l.Classifier):  <span class="co">#@save</span></span>
+<span id="cb56-2"><a href=""></a>    <span class="co">"""The LeNet-5 model."""</span></span>
+<span id="cb56-3"><a href=""></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, lr<span class="op">=</span><span class="fl">0.1</span>, num_classes<span class="op">=</span><span class="dv">10</span>):</span>
+<span id="cb56-4"><a href=""></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
+<span id="cb56-5"><a href=""></a>        <span class="va">self</span>.save_hyperparameters()</span>
+<span id="cb56-6"><a href=""></a>        <span class="va">self</span>.net <span class="op">=</span> nn.Sequential(</span>
+<span id="cb56-7"><a href=""></a>            nn.LazyConv2d(<span class="dv">6</span>, kernel_size<span class="op">=</span><span class="dv">5</span>, padding<span class="op">=</span><span class="dv">2</span>), nn.Sigmoid(),</span>
+<span id="cb56-8"><a href=""></a>            nn.AvgPool2d(kernel_size<span class="op">=</span><span class="dv">2</span>, stride<span class="op">=</span><span class="dv">2</span>),</span>
+<span id="cb56-9"><a href=""></a>            nn.LazyConv2d(<span class="dv">16</span>, kernel_size<span class="op">=</span><span class="dv">5</span>), nn.Sigmoid(),</span>
+<span id="cb56-10"><a href=""></a>            nn.AvgPool2d(kernel_size<span class="op">=</span><span class="dv">2</span>, stride<span class="op">=</span><span class="dv">2</span>),</span>
+<span id="cb56-11"><a href=""></a>            nn.Flatten(),</span>
+<span id="cb56-12"><a href=""></a>            nn.LazyLinear(<span class="dv">120</span>), nn.Sigmoid(),</span>
+<span id="cb56-13"><a href=""></a>            nn.LazyLinear(<span class="dv">84</span>), nn.Sigmoid(),</span>
+<span id="cb56-14"><a href=""></a>            nn.LazyLinear(num_classes))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <ul>
 <li>take some liberty in the reproduction of LeNet insofar as we replace the Gaussian activation layer by a softmax layer. This greatly simplifies the implementation, not the least due to the fact that the Gaussian decoder is rarely used nowadays. Other than that, this network matches the original LeNet-5 architecture.</li>
@@ -1666,16 +1509,16 @@ epoch 10, loss 0.011</code></pre>
 <li>Let’s see what happens inside the network. By passing a single-channel (black and white) <span class="math inline">\(28 \times 28\)</span> image through the network and printing the output shape at each layer, we can [<strong>inspect the model</strong>] to make sure that its operations line up with what we expect from :numref:<code>img_lenet_vert</code>.</li>
 </ul>
 <p><img data-src="../img/lenet-vert.svg" alt="Compressed notation for LeNet-5."> :label:<code>img_lenet_vert</code></p>
-<div id="9b4d583a" class="cell" data-execution_count="37">
-<div class="sourceCode cell-code" id="cb58"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb58-1"><a href=""></a><span class="at">@d2l.add_to_class</span>(d2l.Classifier)  <span class="co">#@save</span></span>
-<span id="cb58-2"><a href=""></a><span class="kw">def</span> layer_summary(<span class="va">self</span>, X_shape):</span>
-<span id="cb58-3"><a href=""></a>    X <span class="op">=</span> d2l.randn(<span class="op">*</span>X_shape)</span>
-<span id="cb58-4"><a href=""></a>    <span class="cf">for</span> layer <span class="kw">in</span> <span class="va">self</span>.net:</span>
-<span id="cb58-5"><a href=""></a>        X <span class="op">=</span> layer(X)</span>
-<span id="cb58-6"><a href=""></a>        <span class="bu">print</span>(layer.__class__.<span class="va">__name__</span>, <span class="st">'output shape:</span><span class="ch">\t</span><span class="st">'</span>, X.shape)</span>
-<span id="cb58-7"><a href=""></a>        </span>
-<span id="cb58-8"><a href=""></a>model <span class="op">=</span> LeNet()</span>
-<span id="cb58-9"><a href=""></a>model.layer_summary((<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">28</span>, <span class="dv">28</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="6cc9316a" class="cell" data-execution_count="37">
+<div class="sourceCode cell-code" id="cb57"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb57-1"><a href=""></a><span class="at">@d2l.add_to_class</span>(d2l.Classifier)  <span class="co">#@save</span></span>
+<span id="cb57-2"><a href=""></a><span class="kw">def</span> layer_summary(<span class="va">self</span>, X_shape):</span>
+<span id="cb57-3"><a href=""></a>    X <span class="op">=</span> d2l.randn(<span class="op">*</span>X_shape)</span>
+<span id="cb57-4"><a href=""></a>    <span class="cf">for</span> layer <span class="kw">in</span> <span class="va">self</span>.net:</span>
+<span id="cb57-5"><a href=""></a>        X <span class="op">=</span> layer(X)</span>
+<span id="cb57-6"><a href=""></a>        <span class="bu">print</span>(layer.__class__.<span class="va">__name__</span>, <span class="st">'output shape:</span><span class="ch">\t</span><span class="st">'</span>, X.shape)</span>
+<span id="cb57-7"><a href=""></a>        </span>
+<span id="cb57-8"><a href=""></a>model <span class="op">=</span> LeNet()</span>
+<span id="cb57-9"><a href=""></a>model.layer_summary((<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">28</span>, <span class="dv">28</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Conv2d output shape:     torch.Size([1, 6, 28, 28])
 Sigmoid output shape:    torch.Size([1, 6, 28, 28])
@@ -1723,12 +1566,12 @@ Linear output shape:     torch.Size([1, 10])</code></pre>
 <ul>
 <li>Just as with MLPs, our loss function is cross-entropy, and we minimize it via minibatch stochastic gradient descent.</li>
 </ul>
-<div id="0a7856b0" class="cell" data-execution_count="38">
-<div class="sourceCode cell-code" id="cb60"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb60-1"><a href=""></a>trainer <span class="op">=</span> d2l.Trainer(max_epochs<span class="op">=</span><span class="dv">10</span>, num_gpus<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb60-2"><a href=""></a>data <span class="op">=</span> d2l.FashionMNIST(batch_size<span class="op">=</span><span class="dv">128</span>)</span>
-<span id="cb60-3"><a href=""></a>model <span class="op">=</span> LeNet(lr<span class="op">=</span><span class="fl">0.1</span>)</span>
-<span id="cb60-4"><a href=""></a>model.apply_init([<span class="bu">next</span>(<span class="bu">iter</span>(data.get_dataloader(<span class="va">True</span>)))[<span class="dv">0</span>]], init_cnn)</span>
-<span id="cb60-5"><a href=""></a>trainer.fit(model, data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="3a771a4b" class="cell" data-execution_count="38">
+<div class="sourceCode cell-code" id="cb59"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb59-1"><a href=""></a>trainer <span class="op">=</span> d2l.Trainer(max_epochs<span class="op">=</span><span class="dv">10</span>, num_gpus<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb59-2"><a href=""></a>data <span class="op">=</span> d2l.FashionMNIST(batch_size<span class="op">=</span><span class="dv">128</span>)</span>
+<span id="cb59-3"><a href=""></a>model <span class="op">=</span> LeNet(lr<span class="op">=</span><span class="fl">0.1</span>)</span>
+<span id="cb59-4"><a href=""></a>model.apply_init([<span class="bu">next</span>(<span class="bu">iter</span>(data.get_dataloader(<span class="va">True</span>)))[<span class="dv">0</span>]], init_cnn)</span>
+<span id="cb59-5"><a href=""></a>trainer.fit(model, data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 
 </div>
 <img data-src="04_convnets_0_files/figure-revealjs/cell-39-output-1.svg" class="r-stretch"></section>
@@ -1738,32 +1581,6 @@ Linear output shape:     torch.Size([1, 10])</code></pre>
 <li>moved from the MLPs of the 1980s to the CNNs of the 1990s and early 2000s. The architectures proposed, e.g., in the form of LeNet-5 remain meaningful, even to this day. It is worth comparing the error rates on Fashion-MNIST achievable with LeNet-5 both to the very best possible with MLPs (:numref:<code>sec_mlp-implementation</code>) and those with significantly more advanced architectures such as ResNet (:numref:<code>sec_resnet</code>). LeNet is much more similar to the latter than to the former. One of the primary differences, as we shall see, is that greater amounts of computation afforded significantly more complex architectures.</li>
 <li>second difference is the relative ease with which we were able to implement LeNet. What used to be an engineering challenge worth months of C++ and assembly code, engineering to improve SN, an early Lisp based deep learning tool :cite:<code>Bottou.Le-Cun.1988</code>, and finally experimentation with models can now be accomplished in minutes. It is this incredible productivity boost that has democratized deep learning model development tremendously. In the next chapter we will follow down this rabbit to hole to see where it takes us.</li>
 </ul>
-</section>
-<section id="exercises-5" class="slide level2">
-<h2>Exercises</h2>
-<ol type="1">
-<li>Let’s modernize LeNet. Implement and test the following changes:
-<ol type="1">
-<li>Replace the average pooling with max-pooling.</li>
-<li>Replace the softmax layer with ReLU.</li>
-</ol></li>
-<li>Try to change the size of the LeNet style network to improve its accuracy in addition to max-pooling and ReLU.
-<ol type="1">
-<li>Adjust the convolution window size.</li>
-<li>Adjust the number of output channels.</li>
-<li>Adjust the number of convolution layers.</li>
-<li>Adjust the number of fully connected layers.</li>
-<li>Adjust the learning rates and other training details (e.g., initialization and number of epochs.)</li>
-</ol></li>
-</ol>
-</section>
-<section class="slide level2">
-
-<ol start="3" type="1">
-<li>Try out the improved network on the original MNIST dataset.</li>
-<li>Display the activations of the first and second layer of LeNet for different inputs (e.g., sweaters and coats).</li>
-<li>What happens to the activations when you feed significantly different images into the network (e.g., cats, cars, or even random noise)?</li>
-</ol>
 <div class="quarto-auto-generated-content">
 <p><img src="eclipse_logo_small.png" class="slide-logo"></p>
 <div class="footer footer-default">

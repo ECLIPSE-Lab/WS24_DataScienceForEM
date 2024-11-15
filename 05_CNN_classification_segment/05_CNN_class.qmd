@@ -1,7 +1,7 @@
 ---
 format: 
   revealjs:
-    theme: "night" #["theme/q-theme.scss"]
+    theme: "solarized" #["theme/q-theme.scss"]
     slide-number: c/t
     logo: "eclipse_logo_small.png"
     footer: "[WS24_DataScienceForEM](https://github.com/ECLIPSE-Lab/WS24_DataScienceForEM)"
@@ -378,7 +378,6 @@ $$
 
 
 ## Information Theory Basics
-:label:`subsec_info_theory_basics`
 
 Many deep learning papers use intuition and terms from information theory. To make sense of them, we need some common language. This is a survival guide.
 *Information theory* deals with the problem of encoding, decoding, transmitting, and manipulating information (also known as data).
@@ -389,13 +388,12 @@ Many deep learning papers use intuition and terms from information theory. To ma
 - **Definition**: For a distribution $P$, its *entropy* is:
 
 $$
-H[P] = \sum_j - P(j) \log P(j).
+H[P] = \sum_j - P(j) \log P(j). (1)
 $$
-`eq_softmax_reg_entropy`
 
 ---
 
-- **Fundamental Theorem**: To encode data drawn randomly from distribution $P$, we need at least $H[P]$ "nats" to encode it :cite:`Shannon.1948`.
+- **Fundamental Theorem**: To encode data drawn randomly from distribution $P$, we need at least $H[P]$ "nats" to encode it.
   - **Nat**: Equivalent of a bit but using base $e$ instead of base 2.
   - 1 nat ≈ 1.44 bits.
 
@@ -405,7 +403,7 @@ $$
   - Example: A data stream where every token is the same is easy to predict and compress.
 - **Surprise**: Greater when an event has a lower assigned probability.
   - Claude Shannon quantified *surprisal* at observing an event $j$ with probability $P(j)$ as $\log \frac{1}{P(j)} = -\log P(j)$.
-- **Expected Surprisal**: Entropy defined in :eqref:`eq_softmax_reg_entropy` is the *expected surprisal* when probabilities match the data-generating process.
+- **Expected Surprisal**: Entropy defined in Eq (1) is the *expected surprisal* when probabilities match the data-generating process.
 
 ## Cross-Entropy Revisited
 

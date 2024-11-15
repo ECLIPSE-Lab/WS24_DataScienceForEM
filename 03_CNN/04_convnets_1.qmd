@@ -1,7 +1,7 @@
 ---
 format: 
   revealjs:
-    theme: "night" #["theme/q-theme.scss"]
+    theme: "solarized" #["theme/q-theme.scss"]
     slide-number: c/t
     logo: "eclipse_logo_small.png"
     footer: "[WS24_DataScienceForEM](https://github.com/ECLIPSE-Lab/WS24_DataScienceForEM)"
@@ -76,157 +76,31 @@ from torch import nn
 
 ![Image filters learned by the first layer of AlexNet. Reproduction courtesy of :citet:`Krizhevsky.Sutskever.Hinton.2012`.](../img/filters.png)
 
-
-## AlexNet
-
-- AlexNet network showed, for the first time, that **features obtained by learning can transcend manually-designed features*
-- Note that we provide a slightly streamlined version of AlexNet removing some of the design quirks that were needed in 2012 to make the model fit on two small GPUs.
-
-![From LeNet (left) to AlexNet (right).](../img/alexnet.svg)
-
-## Architecture
-
-- AlexNet's first layer, the convolution window shape is $11\times11$.
-- Since the images in ImageNet are eight times higher and wider than the MNIST images, objects in ImageNet data tend to occupy more pixels with more visual detail. 
-- Consequently, a larger convolution window is needed to capture the object. The convolution window shape in the second layer is reduced to $5\times5$, followed by $3\times3$. 
-- In addition, after the first, second, and fifth convolutional layers, the network adds max-pooling layers with a window shape of $3\times3$ and a stride of 2. 
-- Moreover, AlexNet has ten times more convolution channels than LeNet.
-- After the last convolutional layer, there are two huge fully connected layerswith 4096 outputs. 
-
-
-## Activation Functions
-
--  changed the sigmoid activation function --> ReLU activation function. 
--  ReLU activation function makes model training easier when using different parameter initialization methods. gradient of the ReLU activation function in the positive interval is always 1 (:numref:`subsec_activation-functions`). 
--  if the model parameters are not properly initialized, the sigmoid function may obtain a gradient of almost 0 in the positive interval, so that the model cannot be effectively trained.
-
-## Capacity Control and Preprocessing
-
-- AlexNet controls the model complexity of the fully connected layer by dropout (:numref:`sec_dropout`), while LeNet only uses weight decay.
-- the training loop of AlexNet added image augmentation, such as flipping, clipping, and color changes. 
-- makes the model more robust and the larger sample size effectively reduces overfitting. 
-
-```{python}
-class AlexNet(d2l.Classifier):
-    def __init__(self, lr=0.1, num_classes=10):
-        super().__init__()
-        self.save_hyperparameters()
-        self.net = nn.Sequential(
-            nn.LazyConv2d(96, kernel_size=11, stride=4, padding=1),
-            nn.ReLU(), nn.MaxPool2d(kernel_size=3, stride=2),
-            nn.LazyConv2d(256, kernel_size=5, padding=2), nn.ReLU(),
-            nn.MaxPool2d(kernel_size=3, stride=2),
-            nn.LazyConv2d(384, kernel_size=3, padding=1), nn.ReLU(),
-            nn.LazyConv2d(384, kernel_size=3, padding=1), nn.ReLU(),
-            nn.LazyConv2d(256, kernel_size=3, padding=1), nn.ReLU(),
-            nn.MaxPool2d(kernel_size=3, stride=2), nn.Flatten(),
-            nn.LazyLinear(4096), nn.ReLU(), nn.Dropout(p=0.5),
-            nn.LazyLinear(4096), nn.ReLU(),nn.Dropout(p=0.5),
-            nn.LazyLinear(num_classes))
-        self.net.apply(d2l.init_cnn)
-        
-```
-
----
-
-- **construct a single-channel data example** with both height and width of 224 (**to observe the output shape of each layer**). It matches the AlexNet architecture in `fig_alexnet`.
-
-```{python}
-AlexNet().layer_summary((1, 1, 224, 224))
-```
-
-## Training
-
--  AlexNet was trained on ImageNet in :citet:`Krizhevsky.Sutskever.Hinton.2012`, we use Fashion-MNIST here since training an ImageNet model to convergence could take hours or days even on a modern GPU. 
--  One of the problems with applying AlexNet directly on [**Fashion-MNIST**] is that its (**images have lower resolution**) ($28 \times 28$ pixels) (**than ImageNet images.**) 
--  To make things work, (**we upsample them to $224 \times 224$**). This is generally not a smart practice, as it simply increases the computational  complexity without adding information. Nonetheless, we do it here to be faithful to the AlexNet architecture.
--  We perform this resizing with the `resize` argument in the `d2l.FashionMNIST` constructor.
-
----
-
-- Now, we can [**start training AlexNet.**] Compared to LeNet in :numref:`sec_lenet`, the main change here is the use of a smaller learning rate and much slower training due to the deeper and wider network, the higher image resolution, and the more costly convolutions.
-
-```{python}
-model = AlexNet(lr=0.01)
-data = d2l.FashionMNIST(batch_size=128, resize=(224, 224))
-trainer = d2l.Trainer(max_epochs=10, num_gpus=1)
-# trainer.fit(model, data)
-```
-
-## Discussion
-
-- AlexNet's structure bears a striking resemblance to LeNet, with a number of critical improvements, both for accuracy (dropout) and for ease of training (ReLU). 
-- What is equally striking is the amount of progress that has been made in terms of deep learning tooling. 
-- Reviewing the architecture, we see that AlexNet has an Achilles heel when it comes to efficiency: the last two hidden layers require matrices of size $6400 \times 4096$ and $4096 \times 4096$, respectively. 
-- This is one of the reasons why AlexNet has been surpassed by much more effective architectures that we will cover in the following sections. 
-- Nonetheless, it is a key step from shallow to deep networks that are used nowadays. 
-- even though the number of parameters by far exceeds the amount of training data in our experiments (the last two layers have more than 40 million parameters, trained on a datasets of 60 thousand images), there is hardly any overfitting: training and validation loss are virtually identical throughout training. 
-- due to the improved regularization, such as Dropout, inherent in modern deep network designs.
-
-
-## Exercises
-
-1. Following up on the discussion above, analyze the computational properties of AlexNet.
-    1. Compute the memory footprint for convolutions and fully connected layers, respectively. Which one dominates?
-    1. Calculate the computational cost for the convolutions and the fully connected layers.
-    1. How does the memory (read and write bandwidth, latency, size) affect computation? Is there any difference in its effects for training and inference?
-1. You are a chip designer and need to trade off computation and memory bandwidth. For example, a faster chip requires more power and possibly a larger chip area. More memory bandwidth requires more pins and control logic, thus also more area. How do you optimize?
-1. Why do engineers no longer report performance benchmarks on AlexNet?
-1. Try increasing the number of epochs when training AlexNet. Compared with LeNet, how do the results differ? Why?
-
----
-
-1. AlexNet may be too complex for the Fashion-MNIST dataset, in particular due to the low resolution of the initial images.
-    1. Try simplifying the model to make the training faster, while ensuring that the accuracy does not drop significantly.
-    2. Design a better model that works directly on $28 \times 28$ images.
-2. Modify the batch size, and observe the changes in throughput (images/s), accuracy, and GPU memory.
-3. Apply dropout and ReLU to LeNet-5. Does it improve? Can you improve things further by preprocessing to take advantage of the invariances inherent in the images?
-4. Can you make AlexNet overfit? Which feature do you need to remove or change to break training? 
-
-## Networks Using Blocks (VGG)
-
-- AlexNet offered empirical evidence that deep CNNs can achieve good results, it did not provide a general template to guide subsequent researchers in designing new networks. 
-- In the following sections, we will introduce several heuristic concepts commonly used to design deep networks.
-- Progress in this field mirrors that of VLSI (very large scale integration)  in chip design where engineers moved from placing transistors to logical elements to logic blocks :cite:`Mead.1980`. 
-- design of neural network architectures has grown progressively more abstract: individual neurons to whole layers, and now to blocks, repeating patterns of layers. 
-
---- 
-
-
-- A decade later, this has now progressed to researchers using entire trained models to repurpose them for different,  albeit related, tasks. Such large pretrained models are typically called  *foundation models* :cite:`bommasani2021opportunities`. 
-- Back to network design. The idea of using blocks first emerged from the Visual Geometry Group (VGG) at Oxford University, in their eponymously-named *VGG* network :cite:`Simonyan.Zisserman.2014`. 
-- It is easy to implement these repeated structures in code with any modern deep learning framework by using loops and subroutines. 
-
 ```{python}
 from d2l import torch as d2l
 import torch
 from torch import nn
 ```
 
+## Networks Using Blocks (VGG)
+
+- While AlexNet proved deep CNNs could achieve good results, it didn't provide a template for network design.
+- Neural network design has evolved from individual neurons to whole layers, and now to blocks of repeating patterns, similar to how VLSI design progressed from transistors to logic blocks :cite:`Mead.1980`.
+- The VGG network from Oxford University pioneered the use of repeated block structures :cite:`Simonyan.Zisserman.2014`, a concept that has evolved into today's foundation models :cite:`bommasani2021opportunities`.
+
+
+
 ## VGG Blocks
 
-- The basic building block of CNNs is a sequence of the following: 
-- (i) a convolutional layer with padding to maintain the resolution,
-- (ii) a nonlinearity such as a ReLU, 
-- (iii) a pooling layer such as max-pooling to reduce the resolution. 
-- One of the problems with  this approach: spatial resolution decreases quite rapidly. 
-- imposes a hard limit of $\log_2 d$ convolutional layers on the network before all dimensions ($d$) are used up. For instance, in the case of ImageNet, it would be impossible to have more than 8 convolutional layers in this way. 
-- key idea of :citet:`Simonyan.Zisserman.2014` was to use *multiple* convolutions in between downsampling via max-pooling in the form of a block. 
-- primarily interested in whether deep or wide networks perform better. 
-- For instance, the successive application of two $3 \times 3$ convolutions touches the same pixels as a single $5 \times 5$ convolution does. 
+- The basic building block of CNNs consists of:
+  - (i) a convolutional layer with padding to maintain resolution
+  - (ii) a nonlinearity (ReLU)
+  - (iii) a pooling layer to reduce resolution
 
----
-
-- At the same time, the latter uses approximately as many parameters ($25 \cdot c^2$) as three $3 \times 3$ convolutions do ($3 \cdot 9 \cdot c^2$). 
-- In a rather detailed analysis they showed that deep and narrow networks significantly outperform their shallow counterparts. This set deep learning on a quest for ever deeper networks with over 100 layers for typical applications.
-- Stacking $3 \times 3$ convolutions has become a gold standard in later deep networks (a design decision only to be revisited recently by :citet:`liu2022convnet`). Consequently, fast implementations for small convolutions have become a staple on GPUs :cite:`lavin2016fast`. 
-- Back to VGG: a VGG block consists of a *sequence* of convolutions with $3\times3$ kernels with padding of 1  (keeping height and width) followed by a $2 \times 2$ max-pooling layer with stride of 2 (halving height and width after each block). 
-
----
-
-
-- In the code below, we define a function called `vgg_block` to implement one VGG block.
-- The function below takes two arguments, corresponding to the number of convolutional layers `num_convs` and the number of output channels `num_channels`.
+- Key innovation of VGG: use *multiple* 3×3 convolutions between pooling layers
+  - Two 3×3 convolutions = same receptive field as one 5×5
+  - Three 3×3 convolutions ($3 \cdot 9 \cdot c^2$ parameters) ≈ one 5×5 ($25 \cdot c^2$ parameters)
+  - Deep and narrow networks outperformed shallow ones
 
 ```{python}
 def vgg_block(num_convs, out_channels):
@@ -240,22 +114,14 @@ def vgg_block(num_convs, out_channels):
 
 ## VGG Network
 
-- VGG Network can be partitioned into two parts: 
+- VGG Network consists of two parts: 
   - first consisting mostly of convolutional and pooling layers 
   - second consisting of fully connected layers that are identical to those in AlexNet. 
 -  key difference : convolutional layers are grouped in nonlinear transformations that leave the dimensonality unchanged, followed by a resolution-reduction step, as depicted in :numref:`fig_vgg`. 
 
-![From AlexNet to VGG. The key difference is that VGG consists of blocks of layers, whereas AlexNet's layers are all designed individually.](../img/vgg.svg){centered=true width=30%}
-`fig_vgg`
+![From AlexNet to VGG. The key difference is that VGG consists of blocks of layers, whereas AlexNet's layers are all designed individually.](../img/vgg.svg){centered=true width=40%}
 
 ---
-
-- convolutional part of the network connects several VGG blocks from :numref:`fig_vgg` (also defined in the `vgg_block` function) in succession. This grouping of convolutions is a pattern that has remained almost unchanged over the past decade, although the specific choice of operations has undergone considerable modifications. 
-- The variable `arch` consists of a list of tuples (one per block), where each contains two values: the number of convolutional layers and the number of output channels, which are precisely the arguments required to call the `vgg_block` function. 
-- As such, VGG defines a *family* of networks rather than just a specific manifestation. To build a specific network we simply iterate over `arch` to compose the blocks.
-
----
-
 
 ```{python}
 class VGG(d2l.Classifier):
@@ -271,25 +137,12 @@ class VGG(d2l.Classifier):
             nn.LazyLinear(4096), nn.ReLU(), nn.Dropout(0.5),
             nn.LazyLinear(num_classes))
         self.net.apply(d2l.init_cnn)
-
 ```
-
-- original VGG network had 5 convolutional blocks, among which the first two have one convolutional layer each and the latter three contain two convolutional layers each. 
-- The first block has 64 output channels and each subsequent block doubles the number of output channels, until that number reaches 512.
-
-
----
-
-
-
-- Since this network uses 8 convolutional layers and 3 fully connected layers, it is often called VGG-11.
 
 ```{python}
 VGG(arch=((1, 64), (1, 128), (2, 256), (2, 512), (2, 512))).layer_summary(
     (1, 1, 224, 224))
 ```
-
-- halve height and width at each block, finally reaching a height and width of 7 before flattening the representations for processing by the fully connected part of the network. 
 
 ## Training
 
@@ -326,47 +179,29 @@ model.apply_init([next(iter(data.get_dataloader(True)))[0]], d2l.init_cnn)
 
 ## Network in Network (NiN)
 
-- LeNet, AlexNet, and VGG all share a common design pattern: extract features exploiting *spatial* structure via a sequence of convolutions and pooling layers and post-process the representations via fully connected layers. 
-- design poses two major challenges. 
-- the fully connected layers at the end of the architecture consume tremendous numbers of parameters. 
-- For instance, even a simple model such as VGG-11 requires a monstrous $25088 \times 4096$ matrix, occupying almost 400MB of RAM in single precision (FP32). 
-- significant impediment to computation, in particular on mobile and embedded devices. 
-- After all, even high-end mobile phones sport no more than 8GB of RAM. At the time VGG was invented, this was an order of magnitude less (the iPhone 4S had 512MB). 
+- LeNet, AlexNet, and VGG share a common pattern: extract features via convolutions and pooling, then process via fully connected layers.
+- This design has two major challenges:
+  - Fully connected layers consume enormous memory (e.g., VGG-11 needs 400MB just for one layer)
+  - Adding nonlinearity through fully connected layers would destroy spatial structure
 
----
-
-- As such, it would have been difficult to justify spending the majority of memory on an image classifier. 
-- equally impossible to add fully connected layers earlier in the network to increase the degree of nonlinearity: doing so would destroy the spatial structure and require potentially even more memory. 
-- *network in network* (*NiN*) blocks :cite:`Lin.Chen.Yan.2013` offer an alternative, capable of solving both problems in one simple strategy. 
-- proposed based on a very simple insight: 
-- (i) use $1 \times 1$ convolutions to add local nonlinearities across the channel activations  
-- (ii) use global average pooling to integrate across all locations in the last representation layer. 
-- Note that global average pooling would not be effective, were it not for the added nonlinearities. Let's dive into this in detail.
+- *Network in Network* (*NiN*) :cite:`Lin.Chen.Yan.2013` solves both problems by:
+  - Using $1 \times 1$ convolutions for local nonlinearities across channels
+  - Using global average pooling instead of fully connected layers
 
 ```{python}
 from d2l import torch as d2l
 import torch
 from torch import nn
 ```
-
 ## NiN Blocks
 
-- Recall :numref:`subsec_1x1`. In it we discussed that the inputs and outputs of convolutional layers consist of four-dimensional tensors with axes corresponding to the example, channel, height, and width.
-- Also recall that the inputs and outputs of fully connected layers are typically two-dimensional tensors corresponding to the example and feature.
-- The idea behind NiN is to apply a fully connected layer at each pixel location (for each height and width). 
-- The resulting $1 \times 1$ convolution can be thought as a fully connected layer acting independently on each pixel location.
-- :numref:`fig_nin` illustrates the main structural differences between VGG and NiN, and their blocks. 
+- NiN applies a fully connected layer at each pixel location using $1 \times 1$ convolutions
+- This differs from VGG by following the initial convolution with $1 \times 1$ convolutions instead of $3 \times 3$ convolutions
+- Eliminates the need for large fully connected layers at the end
+
+![Comparing the architectures of VGG and NiN, and of their blocks.](../img/nin.svg){centered=true width=40%}
 
 ---
-
-
-- Note both the difference in the NiN blocks (the initial convolution is followed by $1 \times 1$ convolutions, whereas VGG retains $3 \times 3$ convolutions) and in the end where we no longer require a giant fully connected layer.
-
-![Comparing the architectures of VGG and NiN, and of their blocks.](../img/nin.svg)
-:width:`600px`
-:label:`fig_nin`
-
-
 
 ```{python}
 def nin_block(out_channels, kernel_size, strides, padding):
@@ -378,11 +213,11 @@ def nin_block(out_channels, kernel_size, strides, padding):
 
 ## NiN Model
 
-- NiN uses the same initial convolution sizes as AlexNet (it was proposed shortly thereafter).
-- The kernel sizes are $11\times 11$, $5\times 5$, and $3\times 3$, respectively, and the numbers of output channels match those of AlexNet. Each NiN block is followed by a max-pooling layer with a stride of 2 and a window shape of $3\times 3$.
-- The second significant difference between NiN and both AlexNet and VGG is that NiN avoids fully connected layers altogether.
-- Instead, NiN uses a NiN block with a number of output channels equal to the number of label classes, followed by a *global* average pooling layer, yielding a vector of logits.
-- This design significantly reduces the number of required model parameters, albeit at the expense of a potential increase in training time.
+- NiN uses the same initial convolution sizes as AlexNet ($11\times 11$, $5\times 5$, and $3\times 3$)
+- Instead of fully connected layers, NiN uses:
+  - A NiN block with output channels equal to number of classes
+  - A global average pooling layer
+  - This design significantly reduces parameters
 
 ```{python}
 class NiN(d2l.Classifier):
@@ -451,18 +286,17 @@ model.apply_init([next(iter(data.get_dataloader(True)))[0]], d2l.init_cnn)
 
 ## Batch Normalization
 
-- Training deep neural networks is difficult. 
-- Getting them to converge in a reasonable amount of time can be tricky.
-- In this section, we describe *batch normalization*, a popular and effective technique that consistently accelerates the convergence of deep networks :cite:`Ioffe.Szegedy.2015`.
-- Together with residual blocks---covered later in :numref:`sec_resnet`---batch normalization has made it possible for practitioners to routinely train networks with over 100 layers. 
-- A secondary (serendipitous) benefit of batch normalization lies in its inherent regularization.
+- Training deep neural networks is difficult and slow to converge
+- *Batch normalization* :cite:`Ioffe.Szegedy.2015` helps by:
+  - Accelerating network convergence
+  - Enabling training of very deep networks (100+ layers)
+  - Providing inherent regularization
 
 ```{python}
 from d2l import torch as d2l
 import torch
 from torch import nn
 ```
-
 
 ## Training Deep Networks
 
@@ -617,162 +451,6 @@ $$\hat{\mu} \stackrel{\mathrm{def}}{=} \frac{1}{n} \sum_{i=1}^n x_i \text{ and }
 - Typically, after training, we use the entire dataset to compute stable estimates of the variable statistics and then fix them at prediction time. 
 - Consequently, batch normalization behaves differently during training and at test time. Recall that dropout also exhibits this characteristic.
 
-## Implementation from Scratch
-
-- To see how batch normalization works in practice, we implement one from scratch below.
-
-```{python}
-def batch_norm(X, gamma, beta, moving_mean, moving_var, eps, momentum):
-    ## Use is_grad_enabled to determine whether we are in training mode
-    if not torch.is_grad_enabled():
-        ## In prediction mode, use mean and variance obtained by moving average
-        X_hat = (X - moving_mean) / torch.sqrt(moving_var + eps)
-    else:
-        assert len(X.shape) in (2, 4)
-        if len(X.shape) == 2:
-            ## When using a fully connected layer, calculate the mean and
-            ## variance on the feature dimension
-            mean = X.mean(dim=0)
-            var = ((X - mean) ** 2).mean(dim=0)
-        else:
-            ## When using a two-dimensional convolutional layer, calculate the
-            ## mean and variance on the channel dimension (axis=1). Here we
-            ## need to maintain the shape of X, so that the broadcasting
-            ## operation can be carried out later
-            mean = X.mean(dim=(0, 2, 3), keepdim=True)
-            var = ((X - mean) ** 2).mean(dim=(0, 2, 3), keepdim=True)
-        ## In training mode, the current mean and variance are used 
-        X_hat = (X - mean) / torch.sqrt(var + eps)
-        ## Update the mean and variance using moving average
-        moving_mean = (1.0 - momentum) * moving_mean + momentum * mean
-        moving_var = (1.0 - momentum) * moving_var + momentum * var
-    Y = gamma * X_hat + beta  ## Scale and shift
-    return Y, moving_mean.data, moving_var.data
-```
-
----
-
-- We can now [**create a proper `BatchNorm` layer.**] Our layer will maintain proper parameters for scale `gamma` and shift `beta`, both of which will be updated in the course of training. 
-- Additionally, our layer will maintain moving averages of the means and variances for subsequent use during model prediction.
-- Putting aside the algorithmic details, note the design pattern underlying our implementation of the layer. 
-- Typically, we define the mathematics in a separate function, say `batch_norm`. 
-- We then integrate this functionality into a custom layer, whose code mostly addresses bookkeeping matters, such as moving data to the right device context, allocating and initializing any required variables, keeping track of moving averages (here for mean and variance), and so on.
-- This pattern enables a clean separation of mathematics from boilerplate code. 
-- Also note that for the sake of convenience we did not worry about automatically inferring the input shape here, thus we need to specify the number of features throughout. 
-- By now all modern deep learning frameworks offer automatic detection of size and shape in the high-level batch normalization APIs (in practice we will use this instead).
-
----
-
-```{python}
-class BatchNorm(nn.Module):
-    ## num_features: the number of outputs for a fully connected layer or the
-    ## number of output channels for a convolutional layer. num_dims: 2 for a
-    ## fully connected layer and 4 for a convolutional layer
-    def __init__(self, num_features, num_dims):
-        super().__init__()
-        if num_dims == 2:
-            shape = (1, num_features)
-        else:
-            shape = (1, num_features, 1, 1)
-        ## The scale parameter and the shift parameter (model parameters) are
-        ## initialized to 1 and 0, respectively
-        self.gamma = nn.Parameter(torch.ones(shape))
-        self.beta = nn.Parameter(torch.zeros(shape))
-        ## The variables that are not model parameters are initialized to 0 and
-        ## 1
-        self.moving_mean = torch.zeros(shape)
-        self.moving_var = torch.ones(shape)
-
-    def forward(self, X):
-        ## If X is not on the main memory, copy moving_mean and moving_var to
-        ## the device where X is located
-        if self.moving_mean.device != X.device:
-            self.moving_mean = self.moving_mean.to(X.device)
-            self.moving_var = self.moving_var.to(X.device)
-        ## Save the updated moving_mean and moving_var
-        Y, self.moving_mean, self.moving_var = batch_norm(
-            X, self.gamma, self.beta, self.moving_mean,
-            self.moving_var, eps=1e-5, momentum=0.1)
-        return Y
-```
-
-- used `momentum` to govern the aggregation over past mean and variance estimates. 
-- This is somewhat of a misnomer as it has nothing whatsoever to do with the *momentum* term of optimization in :numref:`sec_momentum`. 
-- Nonetheless, it is the commonly adopted name for this term and in deference to API naming convention we use the same variable name in our code, too.
-
-## [**LeNet with Batch Normalization**]
-
-- see how to apply `BatchNorm` in context, below we apply it to a traditional LeNet model (:numref:`sec_lenet`).
-- Recall that batch normalization is applied after the convolutional layers or fully connected layers but before the corresponding activation functions.
-
-```{python}
-class BNLeNetScratch(d2l.Classifier):
-    def __init__(self, lr=0.1, num_classes=10):
-        super().__init__()
-        self.save_hyperparameters()
-        self.net = nn.Sequential(
-            nn.LazyConv2d(6, kernel_size=5), BatchNorm(6, num_dims=4),
-            nn.Sigmoid(), nn.AvgPool2d(kernel_size=2, stride=2),
-            nn.LazyConv2d(16, kernel_size=5), BatchNorm(16, num_dims=4),
-            nn.Sigmoid(), nn.AvgPool2d(kernel_size=2, stride=2),
-            nn.Flatten(), nn.LazyLinear(120),
-            BatchNorm(120, num_dims=2), nn.Sigmoid(), nn.LazyLinear(84),
-            BatchNorm(84, num_dims=2), nn.Sigmoid(),
-            nn.LazyLinear(num_classes))
-
-```
-
----
-
-- As before, we will [**train our network on the Fashion-MNIST dataset**]. This code is virtually identical to that when we first trained LeNet.
-
-```{python}
-trainer = d2l.Trainer(max_epochs=10, num_gpus=1)
-data = d2l.FashionMNIST(batch_size=128)
-model = BNLeNetScratch(lr=0.1)
-model.apply_init([next(iter(data.get_dataloader(True)))[0]], d2l.init_cnn)
-# trainer.fit(model, data)
-```
-
-- Let's [**have a look at the scale parameter `gamma` and the shift parameter `beta`**] learned from the first batch normalization layer.
-
-```{python}
-model.net[1].gamma.reshape((-1,)), model.net[1].beta.reshape((-1,))
-```
-
-## [**Concise Implementation**]
-
-- Compared with the `BatchNorm` class, which we just defined ourselves, we can use the `BatchNorm` class defined in high-level APIs from the deep learning framework directly.
-- The code looks virtually identical to our implementation above, except that we no longer need to provide additional arguments for it to get the dimensions right.
-
-```{python}
-class BNLeNet(d2l.Classifier):
-    def __init__(self, lr=0.1, num_classes=10):
-        super().__init__()
-        self.save_hyperparameters()
-        self.net = nn.Sequential(
-            nn.LazyConv2d(6, kernel_size=5), nn.LazyBatchNorm2d(),
-            nn.Sigmoid(), nn.AvgPool2d(kernel_size=2, stride=2),
-            nn.LazyConv2d(16, kernel_size=5), nn.LazyBatchNorm2d(),
-            nn.Sigmoid(), nn.AvgPool2d(kernel_size=2, stride=2),
-            nn.Flatten(), nn.LazyLinear(120), nn.LazyBatchNorm1d(),
-            nn.Sigmoid(), nn.LazyLinear(84), nn.LazyBatchNorm1d(),
-            nn.Sigmoid(), nn.LazyLinear(num_classes))
-
-```
-
----
-
-- Below, we [**use the same hyperparameters to train our model.**] Note that as usual, the high-level API variant runs much faster because its code has been compiled to C++ or CUDA while our custom implementation must be interpreted by Python.
-
-```{python}
-trainer = d2l.Trainer(max_epochs=10, num_gpus=1)
-data = d2l.FashionMNIST(batch_size=128)
-model = BNLeNet(lr=0.1)
-model.apply_init([next(iter(data.get_dataloader(True)))[0]], d2l.init_cnn)
-# trainer.fit(model, data)
-```
-
 
 ## Discussion
 
@@ -782,35 +460,6 @@ model.apply_init([next(iter(data.get_dataloader(True)))[0]], d2l.init_cnn)
 - Even with dropout and weight decay, they remain so flexible that their ability to generalize to unseen data likely needs significantly more refined learning-theoretic generalization guarantees.
 
 ---
-
-
-- explanation for why it works:
-  - by reducing *internal covariate shift*. 
-  - presumably by *internal covariate shift* the authors meant something like the intuition expressed above---the notion that the distribution of variable values changes over the course of training.
-- However, there were two problems with this explanation: 
-- i) This drift is very different from *covariate shift*, rendering the name a misnomer. If anything, it is closer to concept drift. 
-- ii) The explanation offers an under-specified intuition but leaves the question of *why precisely this technique works* an open question wanting for a rigorous explanation.
-
----
-
-
-- Throughout this book, we aim to convey the intuitions that practitioners use to guide their development of deep neural networks.
-- However, we believe that it is important to separate these guiding intuitions from established scientific fact.
-- Eventually, when you master this material and start writing your own research papers you will want to be clear to delineate between technical claims and hunches.
-- Following the success of batch normalization, its explanation in terms of *internal covariate shift* has repeatedly surfaced in debates in the technical literature and broader discourse about how to present machine learning research. 
-- In a memorable speech given while accepting a Test of Time Award at the 2017 NeurIPS conference, Ali Rahimi used *internal covariate shift* as a focal point in an argument likening the modern practice of deep learning to alchemy. 
-- Subsequently, the example was revisited in detail in a position paper outlining troubling trends in machine learning :cite:`Lipton.Steinhardt.2018`. 
-- Other authors have proposed alternative explanations for the success of batch normalization, some claiming that batch normalization's success comes despite exhibiting behavior that is in some ways opposite to those claimed in the original paper :cite:`Santurkar.Tsipras.Ilyas.ea.2018`.
-
----
-
-
-- We note that the *internal covariate shift* is no more worthy of criticism than any of thousands of similarly vague claims made every year in the technical machine learning literature. 
-- Likely, its resonance as a focal point of these debates owes to its broad recognizability to the target audience. 
-- Batch normalization has proven an indispensable method, applied in nearly all deployed image classifiers, earning the paper that introduced the technique tens of thousands of citations. We conjecture, though, that the guiding principles of regularization through noise injection, acceleration through rescaling and lastly preprocessing may well lead to further inventions of layers and techniques in the future.
-
----
-
 
 - On a more practical note, there are a number of aspects worth remembering about batch normalization: 
 * During model training, batch normalization continuously adjusts the intermediate output of
@@ -823,28 +472,6 @@ model.apply_init([next(iter(data.get_dataloader(True)))[0]], d2l.init_cnn)
 * Batch normalization is useful for regularization and improving convergence in optimization. On the other hand,
   the original motivation of reducing internal covariate shift seems not to be a valid explanation.
 * For more robust models that are less sensitive to input perturbations, consider removing batch normalization :cite:`wang2022removing`.
-
-## Exercises
-
-1. Should we remove the bias parameter from the fully connected layer or the convolutional layer before the batch normalization? Why?
-1. Compare the learning rates for LeNet with and without batch normalization.
-    1. Plot the increase in validation accuracy.
-    1. How large can you make the learning rate before the optimization fails in both cases?
-1. Do we need batch normalization in every layer? Experiment with it?
-1. Implement a "lite" version of batch normalization that only removes the mean, or alternatively one that
-   only removes the variance. How does it behave?
-
----
-
-
-1. Fix the parameters `beta` and `gamma`. Observe and analyze the results.
-1. Can you replace dropout by batch normalization? How does the behavior change?
-1. Research ideas: think of other normalization transforms that you can apply:
-    1. Can you apply the probability integral transform?
-    1. Can you use a full rank covariance estimate? Why should you probably not do that? 
-    1. Can you use other compact matrix variants (block-diagonal, low-displacement rank, Monarch, etc.)?
-    1. Does a sparsification compression act as a regularizer?
-    1. Are there other projections (e.g., convex cone, symmetry group-specific transforms) that you can use?
 
 ## Densely Connected Networks (DenseNet)
 
@@ -874,9 +501,7 @@ $$f(\mathbf{x}) = \mathbf{x} + g(\mathbf{x}).$$
 
 ---
 
-
-![The main difference between ResNet (left) and DenseNet (right) in cross-layer connections: use of addition and use of concatenation. ](../img/densenet-block.svg){width=40% background=white}
-`fig_densenet_block`
+![The main difference between ResNet (left) and DenseNet (right) in cross-layer connections: use of addition and use of concatenation. ](../img/densenet-block.svg){centered=true width=40%}
 
 - As shown in `fig_densenet_block`, the key difference between ResNet and DenseNet is that in the latter case outputs are *concatenated* (denoted by $[,]$) rather than added.
 - As a result, we perform a mapping from $\mathbf{x}$ to its values after applying an increasingly complex sequence of functions:
@@ -893,8 +518,8 @@ f_2\left(\left[\mathbf{x}, f_1\left(\mathbf{x}\right)\right]\right), f_3\left(\l
 - name DenseNet arises from the fact that the dependency graph between variables becomes quite dense. 
 - last layer of such a chain is densely connected to all previous layers. The dense connections are shown in `fig_densenet`.
 
-![Dense connections in DenseNet. Note how the dimensionality increases with depth.](../img/densenet.svg)
-:label:`fig_densenet`
+![Dense connections in DenseNet. Note how the dimensionality increases with depth.](../img/densenet.svg){centered=true width=40%}
+
 
 ---
 
@@ -1040,3 +665,65 @@ data = d2l.FashionMNIST(batch_size=128, resize=(96, 96))
     1. Can you think of an alternative means of reducing the memory consumption? How would you need to change the framework?
 1. Implement the various DenseNet versions presented in Table 1 of the DenseNet paper :cite:`Huang.Liu.Van-Der-Maaten.ea.2017`.
 1. Design an MLP-based model by applying the DenseNet idea. Apply it to the housing price prediction task in :numref:`sec_kaggle_house`.
+
+
+## U-Net Architecture
+
+- U-Net was originally developed for biomedical image segmentation :cite:`ronneberger2015u`
+- Key features:
+  - Symmetric encoder-decoder structure
+  - Skip connections between corresponding encoder-decoder levels
+  - Designed to work with fewer training images
+  - Preserves spatial information through skip connections
+
+![U-Net architecture showing the contracting path (left) and expansive path (right). Image adapted from :cite:`ronneberger2015u`.](../img/u-net-architecture.png){centered=true width=40%}
+
+## U-Net Components
+
+- **Contracting Path (Encoder)**:
+  - Series of convolutional and max pooling operations
+  - Each step doubles the number of feature channels
+  - Captures context and reduces spatial dimensions
+
+- **Expansive Path (Decoder)**:
+  - Upsampling of feature maps
+  - Concatenation with corresponding encoder features
+  - Successive convolutions to combine features
+  - Gradually recovers spatial resolution
+
+## U-Net Skip Connections
+
+- Skip connections are crucial for U-Net's success:
+  - Connect encoder layers to corresponding decoder layers
+  - Allow fine-grained details to flow to decoder
+  - Help prevent vanishing gradients
+  - Enable precise localization combined with context
+
+```{python}
+class UNetBlock(nn.Module):
+    def __init__(self, in_channels, out_channels):
+        super().__init__()
+        self.conv1 = nn.Conv2d(in_channels, out_channels, 3, padding=1)
+        self.conv2 = nn.Conv2d(out_channels, out_channels, 3, padding=1)
+        self.relu = nn.ReLU()
+    
+    def forward(self, x):
+        x = self.relu(self.conv1(x))
+        x = self.relu(self.conv2(x))
+        return x
+```
+
+## U-Net Applications
+
+- Originally designed for medical image segmentation
+- Now widely used in many domains:
+  - Object detection
+  - Industrial defect detection
+  - General segmentation tasks
+
+- Key advantages:
+  - Works well with limited training data
+  - Precise localization
+  - End-to-end training
+  - Fast inference
+
