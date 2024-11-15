@@ -385,19 +385,33 @@
     }
   </style>
   <meta name="twitter:title" content="Outrageously efficient exploratory data analysis with Apache Arrow and dplyr">
+
   <meta name="twitter:description" content="A 10 minute lightning talk on all things arrow + dplyr">
+
   <meta name="twitter:url" content="https://jthomasmock.github.io/arrow-dplyr/#/">
+
   <meta name="twitter:image" content="https://raw.githubusercontent.com/jthomasmock/arrow-dplyr/master/index-img.png">
+
   <meta name="twitter:image:alt" content="The title slide of the presentation, with the arrow and dplyr hex logos">
+
   <meta name="twitter:card" content="summary_large_image">
+
   <meta name="twitter:creator" content="@thomas_mock">
+
   <meta name="twitter:site" content="@thomas_mock">
+
   <meta property="og:title" content="Outrageously efficient exploratory data analysis with Apache Arrow and dplyr">
+
   <meta property="og:description" content="A 10 minute lightning talk on all things arrow + dplyr">
+
   <meta property="og:url" content="https://jthomasmock.github.io/arrow-dplyr/#/">
+
   <meta property="og:image" content="https://raw.githubusercontent.com/jthomasmock/arrow-dplyr/master/index-img.png">
+
   <meta property="og:image:alt" content="The title slide of the presentation, with the arrow and dplyr hex logos">
+
   <meta property="og:type" content="website">
+
   <meta property="og:locale" content="en_US">
 </head>
 <body class="quarto-dark">
@@ -452,7 +466,7 @@ Philipp Pelz
 <li>In the terminology of machine learning, the dataset is called a <em>training dataset</em> or <em>training set</em>, and each row (containing the data corresponding to one sale) is called an <em>example</em> (or <em>data point</em>, <em>instance</em>, <em>sample</em>).</li>
 <li>The thing we are trying to predict (price) is called a <em>label</em> (or <em>target</em>). The variables (age and area) upon which the predictions are based are called <em>features</em> (or <em>covariates</em>).</li>
 </ul>
-<div id="841f3ce8" class="cell" data-execution_count="1">
+<div id="f34dd53b" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href=""></a><span class="im">import</span> math</span>
 <span id="cb1-2"><a href=""></a><span class="im">import</span> torch</span>
 <span id="cb1-3"><a href=""></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
@@ -681,7 +695,7 @@ Philipp Pelz
 <li><p>In the first method, we loop over the vectors with a Python for-loop.</p></li>
 <li><p>In the second, we rely on a single call to <code>+</code>.</p></li>
 </ul>
-<div id="04746b94" class="cell" data-execution_count="2">
+<div id="19e09a25" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href=""></a>n <span class="op">=</span> <span class="dv">10000</span></span>
 <span id="cb2-2"><a href=""></a>a <span class="op">=</span> torch.ones(n)</span>
 <span id="cb2-3"><a href=""></a>b <span class="op">=</span> torch.ones(n)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -690,23 +704,23 @@ Philipp Pelz
 <section class="slide level2">
 
 <p>Now we can benchmark the workloads. First, [<strong>we add them, one coordinate at a time, using a for-loop.</strong>]</p>
-<div id="ad9d682a" class="cell" data-execution_count="3">
+<div id="a11bb13f" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href=""></a>c <span class="op">=</span> torch.zeros(n)</span>
 <span id="cb3-2"><a href=""></a>t <span class="op">=</span> time.time()</span>
 <span id="cb3-3"><a href=""></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n):</span>
 <span id="cb3-4"><a href=""></a>    c[i] <span class="op">=</span> a[i] <span class="op">+</span> b[i]</span>
 <span id="cb3-5"><a href=""></a><span class="ss">f'</span><span class="sc">{</span>time<span class="sc">.</span>time() <span class="op">-</span> t<span class="sc">:.5f}</span><span class="ss"> sec'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="3">
-<pre><code>'0.24495 sec'</code></pre>
+<pre><code>'0.54984 sec'</code></pre>
 </div>
 </div>
 <p>(<strong>Alternatively, we rely on the reloaded <code>+</code> operator to compute the elementwise sum.</strong>)</p>
-<div id="674d7401" class="cell" data-execution_count="4">
+<div id="4a1e63e2" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href=""></a>t <span class="op">=</span> time.time()</span>
 <span id="cb5-2"><a href=""></a>d <span class="op">=</span> a <span class="op">+</span> b</span>
 <span id="cb5-3"><a href=""></a><span class="ss">f'</span><span class="sc">{</span>time<span class="sc">.</span>time() <span class="op">-</span> t<span class="sc">:.5f}</span><span class="ss"> sec'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="4">
-<pre><code>'0.00045 sec'</code></pre>
+<pre><code>'0.00000 sec'</code></pre>
 </div>
 </div>
 <ul>
@@ -731,7 +745,7 @@ Philipp Pelz
 </ul>
 <p><span class="math display">\[p(x) = \frac{1}{\sqrt{2 \pi \sigma^2}} \exp\left(-\frac{1}{2 \sigma^2} (x - \mu)^2\right).\]</span></p>
 <p>Below [<strong>we define a function to compute the normal distribution</strong>].</p>
-<div id="a7cb100a" class="cell" data-execution_count="5">
+<div id="6fa11827" class="cell" data-execution_count="5">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href=""></a><span class="kw">def</span> normal(x, mu, sigma):</span>
 <span id="cb7-2"><a href=""></a>    p <span class="op">=</span> <span class="dv">1</span> <span class="op">/</span> math.sqrt(<span class="dv">2</span> <span class="op">*</span> math.pi <span class="op">*</span> sigma<span class="op">**</span><span class="dv">2</span>)</span>
 <span id="cb7-3"><a href=""></a></span>
@@ -741,7 +755,7 @@ Philipp Pelz
 <section class="slide level2">
 
 <p>We can now (<strong>visualize the normal distributions</strong>).</p>
-<div id="ebb12508" class="cell" data-execution_count="6">
+<div id="49c8dda3" class="cell" data-execution_count="6">
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href=""></a><span class="im">from</span> d2l <span class="im">import</span> torch <span class="im">as</span> d2l</span>
 <span id="cb8-2"><a href=""></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb8-3"><a href=""></a><span class="co"># Use NumPy again for visualization</span></span>
@@ -859,7 +873,7 @@ Philipp Pelz
 <li>optimization: concerned with minimizing an objective</li>
 <li>deep learning: concerned with finding a suitable model, given a finite amount of data.</li>
 </ul>
-<div id="03f64950" class="cell" data-execution_count="7">
+<div id="15957da2" class="cell" data-execution_count="7">
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href=""></a><span class="op">%</span>matplotlib inline</span>
 <span id="cb9-2"><a href=""></a><span class="im">from</span> d2l <span class="im">import</span> torch <span class="im">as</span> d2l</span>
 <span id="cb9-3"><a href=""></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
@@ -874,7 +888,7 @@ Philipp Pelz
 <li>As described in :numref:<code>subsec_empirical-risk-and-risk</code>, the empirical risk is an average loss on the training dataset while the risk is the expected loss on the entire population of data.</li>
 <li>Below we define two functions: the risk function <code>f</code> and the empirical risk function <code>g</code>. Suppose that we have only a finite amount of training data. As a result, here <code>g</code> is less smooth than <code>f</code>.</li>
 </ul>
-<div id="645153b5" class="cell" data-execution_count="8">
+<div id="18ea06fa" class="cell" data-execution_count="8">
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href=""></a><span class="kw">def</span> f(x):</span>
 <span id="cb10-2"><a href=""></a>    <span class="cf">return</span> x <span class="op">*</span> torch.cos(np.pi <span class="op">*</span> x)</span>
 <span id="cb10-3"><a href=""></a></span>
@@ -887,7 +901,7 @@ Philipp Pelz
 <ul>
 <li>graph below illustrates that the minimum of the empirical risk on a training dataset may be at a different location from the minimum of the risk (generalization error).</li>
 </ul>
-<div id="4fcc1ed1" class="cell" data-execution_count="9">
+<div id="4671143f" class="cell" data-execution_count="9">
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href=""></a><span class="kw">def</span> annotate(text, xy, xytext):  <span class="co">#@save</span></span>
 <span id="cb11-2"><a href=""></a>    d2l.plt.gca().annotate(text, xy<span class="op">=</span>xy, xytext<span class="op">=</span>xytext,</span>
 <span id="cb11-3"><a href=""></a>                           arrowprops<span class="op">=</span><span class="bu">dict</span>(arrowstyle<span class="op">=</span><span class="st">'-&gt;'</span>))</span>
@@ -922,7 +936,7 @@ Philipp Pelz
 <section class="slide level2">
 
 <p>we can approximate the local minimum and global minimum of this function.</p>
-<div id="0d7f517a" class="cell" data-execution_count="10">
+<div id="f4c3be3f" class="cell" data-execution_count="10">
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href=""></a>x <span class="op">=</span> torch.arange(<span class="op">-</span><span class="fl">1.0</span>, <span class="fl">2.0</span>, <span class="fl">0.01</span>)</span>
 <span id="cb12-2"><a href=""></a>d2l.plot(x, [f(x), ], <span class="st">'x'</span>, <span class="st">'f(x)'</span>)</span>
 <span id="cb12-3"><a href=""></a>annotate(<span class="st">'local minimum'</span>, (<span class="op">-</span><span class="fl">0.3</span>, <span class="op">-</span><span class="fl">0.25</span>), (<span class="op">-</span><span class="fl">0.77</span>, <span class="op">-</span><span class="fl">1.0</span>))</span>
@@ -941,7 +955,7 @@ Philipp Pelz
 <li>Besides local minima, saddle points are another reason for gradients to vanish. A <em>saddle point</em> is any location where all gradients of a function vanish but which is neither a global nor a local minimum.</li>
 <li>Consider the function <span class="math inline">\(f(x) = x^3\)</span>. Its first and second derivative vanish for <span class="math inline">\(x=0\)</span>. Optimization might stall at this point, even though it is not a minimum.</li>
 </ul>
-<div id="5bca79a6" class="cell" data-execution_count="11">
+<div id="38dda9dd" class="cell" data-execution_count="11">
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href=""></a>x <span class="op">=</span> d2l.arange(<span class="op">-</span><span class="fl">2.0</span>, <span class="fl">2.0</span>, <span class="fl">0.01</span>)</span>
 <span id="cb13-2"><a href=""></a>d2l.plot(x, [x<span class="op">**</span><span class="dv">3</span>], <span class="st">'x'</span>, <span class="st">'f(x)'</span>)</span>
 <span id="cb13-3"><a href=""></a>annotate(<span class="st">'saddle point'</span>, (<span class="dv">0</span>, <span class="op">-</span><span class="fl">0.2</span>), (<span class="op">-</span><span class="fl">0.52</span>, <span class="op">-</span><span class="fl">5.0</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -953,7 +967,7 @@ Philipp Pelz
 <ul>
 <li>Saddle points in higher dimensions are even more insidious, as the example below shows. Consider the function <span class="math inline">\(f(x, y) = x^2 - y^2\)</span>. It has its saddle point at <span class="math inline">\((0, 0)\)</span>. This is a maximum with respect to <span class="math inline">\(y\)</span> and a minimum with respect to <span class="math inline">\(x\)</span>. Moreover, it <em>looks</em> like a saddle, which is where this mathematical property got its name.</li>
 </ul>
-<div id="703d27a5" class="cell" data-execution_count="12">
+<div id="4c790eb5" class="cell" data-execution_count="12">
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href=""></a>x, y <span class="op">=</span> d2l.meshgrid(</span>
 <span id="cb14-2"><a href=""></a>    d2l.linspace(<span class="op">-</span><span class="fl">1.0</span>, <span class="fl">1.0</span>, <span class="dv">101</span>), d2l.linspace(<span class="op">-</span><span class="fl">1.0</span>, <span class="fl">1.0</span>, <span class="dv">101</span>))</span>
 <span id="cb14-3"><a href=""></a>z <span class="op">=</span> x<span class="op">**</span><span class="dv">2</span> <span class="op">-</span> y<span class="op">**</span><span class="dv">2</span></span>
@@ -991,7 +1005,7 @@ Philipp Pelz
 <section class="slide level2">
 
 <p>More specifically, <span class="math inline">\(f'(x) = 1 - \tanh^2(x)\)</span> and thus <span class="math inline">\(f'(4) = 0.0013\)</span>. Consequently, optimization will get stuck for a long time before we make progress. This turns out to be one of the reasons that training deep learning models was quite tricky prior to the introduction of the ReLU activation function.</p>
-<div id="a3d00025" class="cell" data-execution_count="13">
+<div id="a0072d1c" class="cell" data-execution_count="13">
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href=""></a><span class="co">#@tab all</span></span>
 <span id="cb15-2"><a href=""></a>x <span class="op">=</span> d2l.arange(<span class="op">-</span><span class="fl">2.0</span>, <span class="fl">5.0</span>, <span class="fl">0.01</span>)</span>
 <span id="cb15-3"><a href=""></a>d2l.plot(x, [d2l.tanh(x)], <span class="st">'x'</span>, <span class="st">'f(x)'</span>)</span>
