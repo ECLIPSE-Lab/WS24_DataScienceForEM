@@ -1,21 +1,21 @@
 <!DOCTYPE html>
 <html lang="en"><head>
-<script src="09_BayesOpt_files/libs/clipboard/clipboard.min.js"></script>
-<script src="09_BayesOpt_files/libs/quarto-html/tabby.min.js"></script>
-<script src="09_BayesOpt_files/libs/quarto-html/popper.min.js"></script>
-<script src="09_BayesOpt_files/libs/quarto-html/tippy.umd.min.js"></script>
-<link href="09_BayesOpt_files/libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="09_BayesOpt_files/libs/quarto-html/light-border.css" rel="stylesheet">
-<link href="09_BayesOpt_files/libs/quarto-html/quarto-html.min.css" rel="stylesheet" data-mode="light">
-<link href="09_BayesOpt_files/libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+<script src="02_gp_priors_files/libs/clipboard/clipboard.min.js"></script>
+<script src="02_gp_priors_files/libs/quarto-html/tabby.min.js"></script>
+<script src="02_gp_priors_files/libs/quarto-html/popper.min.js"></script>
+<script src="02_gp_priors_files/libs/quarto-html/tippy.umd.min.js"></script>
+<link href="02_gp_priors_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="02_gp_priors_files/libs/quarto-html/light-border.css" rel="stylesheet">
+<link href="02_gp_priors_files/libs/quarto-html/quarto-html.min.css" rel="stylesheet" data-mode="light">
+<link href="02_gp_priors_files/libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
   <meta name="generator" content="quarto-1.5.57">
 
-  <title>bayesopt</title>
+  <title>gp_priors</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
-  <link rel="stylesheet" href="09_BayesOpt_files/libs/revealjs/dist/reset.css">
-  <link rel="stylesheet" href="09_BayesOpt_files/libs/revealjs/dist/reveal.css">
+  <link rel="stylesheet" href="02_gp_priors_files/libs/revealjs/dist/reset.css">
+  <link rel="stylesheet" href="02_gp_priors_files/libs/revealjs/dist/reveal.css">
   <style>
     code{white-space: pre-wrap;}
     span.smallcaps{font-variant: small-caps;}
@@ -28,12 +28,77 @@
       margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
       vertical-align: middle;
     }
+    /* CSS for syntax highlighting */
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #97947a;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #97947a;  padding-left: 4px; }
+    div.sourceCode
+      { color: #f8f8f2; background-color: #2b2b2b; }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span { color: #f8f8f2; } /* Normal */
+    code span.al { color: #dcc6e0; } /* Alert */
+    code span.an { color: #d4d0ab; } /* Annotation */
+    code span.at { color: #ffd700; } /* Attribute */
+    code span.bn { color: #dcc6e0; } /* BaseN */
+    code span.bu { color: #f5ab35; } /* BuiltIn */
+    code span.cf { color: #ffa07a; } /* ControlFlow */
+    code span.ch { color: #abe338; } /* Char */
+    code span.cn { color: #ffa07a; } /* Constant */
+    code span.co { color: #d4d0ab; } /* Comment */
+    code span.cv { color: #d4d0ab; font-style: italic; } /* CommentVar */
+    code span.do { color: #d4d0ab; font-style: italic; } /* Documentation */
+    code span.dt { color: #dcc6e0; } /* DataType */
+    code span.dv { color: #dcc6e0; } /* DecVal */
+    code span.er { color: #dcc6e0; } /* Error */
+    code span.ex { color: #ffd700; } /* Extension */
+    code span.fl { color: #f5ab35; } /* Float */
+    code span.fu { color: #ffd700; } /* Function */
+    code span.im { color: #f8f8f2; } /* Import */
+    code span.in { color: #d4d0ab; } /* Information */
+    code span.kw { color: #ffa07a; } /* Keyword */
+    code span.op { color: #00e0e0; } /* Operator */
+    code span.ot { color: #ffa07a; } /* Other */
+    code span.pp { color: #dcc6e0; } /* Preprocessor */
+    code span.sc { color: #00e0e0; } /* SpecialChar */
+    code span.ss { color: #abe338; } /* SpecialString */
+    code span.st { color: #abe338; } /* String */
+    code span.va { color: #f5ab35; } /* Variable */
+    code span.vs { color: #abe338; } /* VerbatimString */
+    code span.wa { color: #d4d0ab; font-style: italic; } /* Warning */
   </style>
-  <link rel="stylesheet" href="09_BayesOpt_files/libs/revealjs/dist/theme/quarto.css">
-  <link href="09_BayesOpt_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
-  <link href="09_BayesOpt_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
-  <link href="09_BayesOpt_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
-  <link href="09_BayesOpt_files/libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
+  <link rel="stylesheet" href="02_gp_priors_files/libs/revealjs/dist/theme/quarto.css">
+  <link href="02_gp_priors_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
+  <link href="02_gp_priors_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
+  <link href="02_gp_priors_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
+  <link href="02_gp_priors_files/libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
   <style type="text/css">
 
   .callout {
@@ -353,10 +418,15 @@
   <div class="reveal">
     <div class="slides">
 
+<section id="title-slide" class="quarto-title-block">
+  <h1 class="title">Definition 1</h1>
 
-<section>
-<section id="bayesian-optimization-and-active-learning" class="title-slide slide level1">
-<h1>Bayesian Optimization and Active Learning</h1>
+<div class="quarto-title-authors">
+</div>
+
+</section>
+<section id="gaussian-process-priors" class="title-slide slide level1">
+<h1>Gaussian Process Priors</h1>
 <h2>
 Data Science in Electron Microscopy
 </h2>
@@ -365,480 +435,267 @@ Data Science in Electron Microscopy
 Philipp Pelz
 </h3>
 <h3>
-2025-01-30
+2024-01-09
 </h3>
 <p><br></p>
 <h3>
 <p>&nbsp; <a href="https://github.com/ECLIPSE-Lab/WS24_DataScienceForEM">https://github.com/ECLIPSE-Lab/WS24_DataScienceForEM</a></p>
 </h3></section>
-<section id="introduction" class="slide level2">
-<h2>Introduction</h2>
+
+<section id="gaussian-process-priors-1" class="title-slide slide level1">
+<h1>Gaussian Process Priors</h1>
 <ul>
-<li>Bayesian Optimization is a method for optimizing black-box functions that are expensive to evaluate.</li>
-<li>Useful for tuning hyperparameters in machine learning models.</li>
+<li><p>Understanding GPs is important for reasoning about model construction and generalization, and for achieving state-of-the-art performance in a variety of applications, including active learning, and hyperparameter tuning in deep learning.</p></li>
+<li><p>GPs are everywhere, and it is in our interests to know what they are and how we can use them.</p></li>
+<li><p>this section: <strong>Gaussian process <em>priors</em></strong> over functions.</p></li>
+</ul>
+<div id="7efeeef9" class="cell" data-execution_count="1">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href=""></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-2"><a href=""></a><span class="im">from</span> scipy.spatial <span class="im">import</span> distance_matrix</span>
+<span id="cb1-3"><a href=""></a><span class="im">from</span> d2l <span class="im">import</span> torch <span class="im">as</span> d2l</span>
+<span id="cb1-4"><a href=""></a></span>
+<span id="cb1-5"><a href=""></a>d2l.set_figsize()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<ul>
+<li>GP is defined as <strong><em>a collection of random variables, any finite number of which have a joint Gaussian distribution</em></strong>.</li>
 </ul>
 </section>
-<section id="gold-mining-analogy" class="slide level2">
-<h2>Gold Mining Analogy</h2>
-<ul>
-<li>Goal: Find the maximum gold content along a line with minimal drillings.</li>
-<li>Two objectives:
-<ol type="1">
-<li><strong>Active Learning</strong>: Estimate gold distribution accurately.</li>
-<li><strong>Bayesian Optimization</strong>: Find the location of maximum gold content.</li>
-</ol></li>
-</ul>
 
-<img data-src="./img/GT.svg" class="r-stretch quarto-figure-center"><p class="caption">Gold Mining</p></section>
-<section id="active-learning" class="slide level2">
-<h2>Active Learning</h2>
+<section id="definition-2" class="title-slide slide level1">
+<h1>Definition 2</h1>
 <ul>
-<li>Aim: Minimize labeling costs while maximizing modeling accuracy.</li>
-<li>Strategy: Label the point with the highest model uncertainty (variance).</li>
-<li>Use Gaussian Process (GP) as a surrogate model for uncertainty estimates. <img data-src="./img/prior2posterior.png"></li>
-<li>Each new data point updates our surrogate model, moving it closer to the ground truth. The black line and the grey shaded region indicate the mean μ and uncertainty μ±σ in our gold distribution estimate before and after drilling.</li>
+<li>If a function <span class="math inline">\(f(x)\)</span> is a Gaussian process, with <em>mean function</em> <span class="math inline">\(m(x)\)</span> and <em>covariance function</em> or <em>kernel</em> <span class="math inline">\(k(x,x')\)</span>, <span class="math inline">\(f(x) \sim \mathcal{GP}(m, k)\)</span>,</li>
+<li>–&gt; any collection of function values queried at any collection of input points <span class="math inline">\(x\)</span> (times, spatial locations, image pixels, etc.), has a joint multivariate Gaussian distribution with mean vector <span class="math inline">\(\mu\)</span> and covariance matrix <span class="math inline">\(K\)</span>: <span class="math inline">\(f(x_1),\dots,f(x_n) \sim \mathcal{N}(\mu, K)\)</span>, where <span class="math inline">\(\mu_i = E[f(x_i)] = m(x_i)\)</span> and <span class="math inline">\(K_{ij} = \mathrm{Cov}(f(x_i),f(x_j)) = k(x_i,x_j)\)</span>.</li>
 </ul>
 </section>
-<section class="slide level2">
 
-
-<img data-src="./img/0.png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/1.png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/2.png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/3.png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/4.png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/5.png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/6.png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/7.png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/8.png" class="r-stretch"></section>
-<section id="bayesian-optimization" class="slide level2">
-<h2>Bayesian Optimization</h2>
+<section id="definition-3" class="title-slide slide level1">
+<h1>Definition 3</h1>
 <ul>
-<li>Aim: Find the maximum of an unknown function efficiently.</li>
-<li>Balance exploration (unknown regions) and exploitation (known high-value regions).</li>
-<li>Key component: Acquisition function.</li>
+<li>Any function</li>
 </ul>
-<p>To solve this problem, we will follow the following algorithm:</p>
-<ol type="1">
-<li>We first choose a surrogate model for modeling the true function f and define its prior.</li>
-<li>Given the set of observations (function evaluations), use Bayes rule to obtain the posterior.</li>
-<li>Use an acquisition function α(x), which is a function of the posterior, to decide the next sample point</li>
-<li>Add newly sampled data to the set of observations and goto step #2 till convergence or budget elapses.</li>
-</ol>
+<p><span class="math display">\[f(x) = w^{\top} \phi(x) = \langle w, \phi(x) \rangle,\]</span><code>(1)</code></p>
+<p>with <span class="math inline">\(w\)</span> drawn from a Gaussian (normal) distribution, and <span class="math inline">\(\phi\)</span> being any vector of basis functions, for example <span class="math inline">\(\phi(x) = (1, x, x^2, ..., x^d)^{\top}\)</span>, is a Gaussian process.</p>
 </section>
-<section id="surrogate-models-and-gaussian-processes" class="slide level2">
-<h2>Surrogate Models and Gaussian Processes</h2>
+
+<section id="definition-4" class="title-slide slide level1">
+<h1>Definition 4</h1>
 <ul>
-<li>Surrogate models estimate the unknown function.</li>
-<li>GPs are flexible and provide uncertainty estimates.</li>
-<li>Update the surrogate model using Bayes’ rule after each evaluation.</li>
+<li>Moreover, any Gaussian process f(x) can be expressed in the form of equation <code>(1)</code>.</li>
 </ul>
 </section>
-<section class="slide level2">
 
-</section></section>
 <section>
-<section id="acquisition-functions" class="title-slide slide level1">
-<h1>Acquisition Functions</h1>
-
-</section>
-<section id="probability-of-improvement-pi" class="slide level2">
-<h2>Probability of Improvement (PI)</h2>
+<section id="a-simple-gaussian-process-1" class="title-slide slide level1">
+<h1>A Simple Gaussian Process 1</h1>
 <ul>
-<li>Chooses the point with the highest probability of improvement over the current best.</li>
-<li>Mathematically, we write the selection of next point as follows: <span class="math inline">\(x_{t+1} = argmax(\alpha_{PI}(x)) = argmax(P(f(x) \geq (f(x^+) +\epsilon)))\)</span></li>
-<li><span class="math inline">\(\begin{aligned}
-      x_{t+1} &amp; = argmax(\alpha_{PI}(x))\\
-      &amp; = argmax(P(f(x) \geq (f(x^+) +\epsilon)))
-      \end{aligned}\)</span></li>
-<li>we are just finding the upper-tail probability (or the CDF) of the surrogate posterior. Moreover, if we are using a GP as a surrogate the expression above converts to</li>
-<li><span class="math inline">\(x^+ = \text{argmax}_{x_i \in x_{1:t}}f(x_i)\)</span></li>
+<li><p>consider a few concrete examples</p></li>
+<li><p>Suppose <span class="math inline">\(f(x) = w_0 + w_1 x\)</span>, and <span class="math inline">\(w_0, w_1 \sim \mathcal{N}(0,1)\)</span>, with <span class="math inline">\(w_0, w_1, x\)</span> all in one dimension.</p></li>
+<li><p>can equivalently write this function as the inner product <span class="math inline">\(f(x) = (w_0, w_1)(1, x)^{\top}\)</span>. In <code>(1)</code> above, <span class="math inline">\(w = (w_0, w_1)^{\top}\)</span> and <span class="math inline">\(\phi(x) = (1,x)^{\top}\)</span>.</p></li>
+</ul>
+<p>…</p>
+<ul>
+<li><p>For any <span class="math inline">\(x\)</span>, <span class="math inline">\(f(x)\)</span> is a sum of two Gaussian random variables.</p></li>
+<li><p>Gaussians are closed under addition –&gt; <span class="math inline">\(f(x)\)</span> is also a Gaussian random variable for any <span class="math inline">\(x\)</span>.</p></li>
+<li><p>In fact, we can compute for any particular <span class="math inline">\(x\)</span> that <span class="math inline">\(f(x)\)</span> is <span class="math inline">\(\mathcal{N}(0,1+x^2)\)</span>.</p></li>
+<li><p>Similarly, the joint distribution for any collection of function values, <span class="math inline">\((f(x_1),\dots,f(x_n))\)</span>, for any collection of inputs <span class="math inline">\(x_1,\dots,x_n\)</span>, is a multivariate Gaussian distribution. Therefore <span class="math inline">\(f(x)\)</span> is a Gaussian process.</p></li>
+</ul>
+<p>…</p>
+<ul>
+<li><span class="math inline">\(f(x)\)</span> is a <strong><em>random function</em></strong>, or a <strong><em>distribution over functions</em></strong>.</li>
+<li>gain some insights into this distribution by repeatedly sampling values for <span class="math inline">\(w_0, w_1\)</span>, and visualizing the corresponding functions <span class="math inline">\(f(x)\)</span>, which are straight lines with slopes and different intercepts, as follows:</li>
 </ul>
 </section>
-<section class="slide level2">
-
-
-<img data-src="./img/density_pi.png" class="r-stretch"></section>
-<section id="intuition-behind-ϵ-in-pi-ϵ-0.075" class="slide level2">
-<h2>Intuition behind ϵ in PI: ϵ = 0.075</h2>
-
-<img data-src="./img/0%20(1).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/1%20(1).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/2%20(1).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/3%20(1).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/4%20(1).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/5%20(1).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/6%20(1).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/7%20(1).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/8%20(1).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/9%20(1).png" class="r-stretch"></section>
-<section class="slide level2">
-
+<section id="a-simple-gaussian-process-2" class="slide level2">
+<h2>A Simple Gaussian Process 2</h2>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href=""></a><span class="kw">def</span> lin_func(x, n_sample):</span>
+<span id="cb2-2"><a href=""></a>    preds <span class="op">=</span> np.zeros((n_sample, x.shape[<span class="dv">0</span>]))</span>
+<span id="cb2-3"><a href=""></a>    <span class="cf">for</span> ii <span class="kw">in</span> <span class="bu">range</span>(n_sample):</span>
+<span id="cb2-4"><a href=""></a>        w <span class="op">=</span> np.random.normal(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>)</span>
+<span id="cb2-5"><a href=""></a>        y <span class="op">=</span> w[<span class="dv">0</span>] <span class="op">+</span> w[<span class="dv">1</span>] <span class="op">*</span> x</span>
+<span id="cb2-6"><a href=""></a>        preds[ii, :] <span class="op">=</span> y</span>
+<span id="cb2-7"><a href=""></a>    <span class="cf">return</span> preds</span>
+<span id="cb2-8"><a href=""></a></span>
+<span id="cb2-9"><a href=""></a>x_points <span class="op">=</span> np.linspace(<span class="op">-</span><span class="dv">5</span>, <span class="dv">5</span>, <span class="dv">50</span>)</span>
+<span id="cb2-10"><a href=""></a>outs <span class="op">=</span> lin_func(x_points, <span class="dv">10</span>)</span>
+<span id="cb2-11"><a href=""></a>lw_bd <span class="op">=</span> <span class="op">-</span><span class="dv">2</span> <span class="op">*</span> np.sqrt((<span class="dv">1</span> <span class="op">+</span> x_points <span class="op">**</span> <span class="dv">2</span>))</span>
+<span id="cb2-12"><a href=""></a>up_bd <span class="op">=</span> <span class="dv">2</span> <span class="op">*</span> np.sqrt((<span class="dv">1</span> <span class="op">+</span> x_points <span class="op">**</span> <span class="dv">2</span>))</span>
+<span id="cb2-13"><a href=""></a></span>
+<span id="cb2-14"><a href=""></a>d2l.set_figsize((<span class="dv">12</span>,<span class="dv">5</span>))</span>
+<span id="cb2-15"><a href=""></a>d2l.plt.fill_between(x_points, lw_bd, up_bd, alpha<span class="op">=</span><span class="fl">0.25</span>)</span>
+<span id="cb2-16"><a href=""></a>d2l.plt.plot(x_points, np.zeros(<span class="bu">len</span>(x_points)), linewidth<span class="op">=</span><span class="dv">4</span>, color<span class="op">=</span><span class="st">'black'</span>)</span>
+<span id="cb2-17"><a href=""></a>d2l.plt.plot(x_points, outs.T)</span>
+<span id="cb2-18"><a href=""></a>d2l.plt.xlabel(<span class="st">"x"</span>, fontsize<span class="op">=</span><span class="dv">20</span>)</span>
+<span id="cb2-19"><a href=""></a>d2l.plt.ylabel(<span class="st">"f(x)"</span>, fontsize<span class="op">=</span><span class="dv">20</span>)</span>
+<span id="cb2-20"><a href=""></a>d2l.plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="quarto-layout-panel" data-layout-ncol="2">
+<div class="quarto-layout-row">
+<div id="e5e5fa83" class="cell quarto-layout-cell" data-execution_count="2" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div class="cell-output cell-output-display">
+<div>
+<figure>
+<p><img data-src="02_gp_priors_files/figure-revealjs/cell-3-output-1.svg"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
 <ul>
-<li>Looking at the graph above, we see that we reach the global maxima in a few iterations .</li>
-<li>Our surrogate possesses a large uncertainty in x∈[2,4] in the first few iterations</li>
-<li>The acquisition function initially exploits regions with a high promise , which leads to high uncertainty in the region x∈[2,4].</li>
-<li>This observation also shows that we do not need to construct an accurate estimate of the black-box function to find its maximum.</li>
+<li>If <span class="math inline">\(w_0\)</span> and <span class="math inline">\(w_1\)</span> are instead drawn from <span class="math inline">\(\mathcal{N}(0,\alpha^2)\)</span>, how do you imagine varying <span class="math inline">\(\alpha\)</span> affects the distribution over functions?</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="from-weight-space-to-function-space-1" class="slide level2">
+<h2>From Weight Space to Function Space 1</h2>
+<ul>
+<li><p>we saw how a <strong>distribution over parameters in a modelinduces a distribution over functions</strong>.</p></li>
+<li><p><strong>often have ideas about the functions we want to model</strong> — whether they’re smooth, periodic, quickly varying, etc. — <strong>relatively tedious to reason about the parameters</strong>, which are largely uninterpretable.</p></li>
+<li><p>GPs provide an <strong>easy mechanism</strong> to <strong>reason <em>directly</em></strong> about functions.</p></li>
+<li><p>Gaussian distribution is entirely defined by its first two moments, its mean and covariance matrix, a Gaussian process by extension is defined by its mean function and covariance function.</p></li>
+</ul>
+<p>In the above example, the mean function</p>
+<p><span class="math display">\[m(x) = E[f(x)] = E[w_0 + w_1x] = E[w_0] + E[w_1]x = 0+0 = 0.\]</span></p>
+<p>Similarly, the covariance function is</p>
+<p><span class="math display">\[k(x,x') = \mathrm{Cov}(f(x),f(x')) = E[f(x)f(x')]-E[f(x)]E[f(x')] = \\ E[w_0^2 + w_0w_1x' + w_1w_0x + w_1^2xx'] = 1 + xx'.\]</span></p>
+</section>
+<section id="from-weight-space-to-function-space-2" class="slide level2">
+<h2>From Weight Space to Function Space 2</h2>
+<ul>
+<li><p>distribution over functions can now be directly specified and sampled from, without needing to sample from the distribution over parameters.</p></li>
+<li><p>For example, to draw from <span class="math inline">\(f(x)\)</span>, we can simply form our multivariate Gaussian distribution associated with any collection of <span class="math inline">\(x\)</span> we want to query, and sample from it directly.</p></li>
+<li><p><strong>very advantageous</strong></p></li>
+<li><p>same derivation for the simple straight line model above can be applied to find the mean and covariance function for <em>any</em> model of the form <span class="math inline">\(f(x) = w^{\top} \phi(x)\)</span>, with <span class="math inline">\(w \sim \mathcal{N}(u,S)\)</span>.</p></li>
+<li><p>In this case, the mean function <span class="math inline">\(m(x) = u^{\top}\phi(x)\)</span>, and the covariance function <span class="math inline">\(k(x,x') = \phi(x)^{\top}S\phi(x')\)</span>. Since <span class="math inline">\(\phi(x)\)</span> can represent a vector of any non-linear basis functions, we are considering a very general model class, including models with an even an <em>infinite</em> number of parameters.</p></li>
 </ul>
 </section>
-<section id="intuition-behind-ϵ-in-pi-ϵ-0.3" class="slide level2">
-<h2>Intuition behind ϵ in PI: ϵ = 0.3</h2>
-
-<img data-src="./img/0%20(2).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/1%20(2).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/2%20(2).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/3%20(2).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/4%20(2).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/5%20(2).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/6%20(2).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/7%20(2).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/8%20(2).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/9%20(2).png" class="r-stretch"></section>
-<section class="slide level2">
-
+<section id="the-radial-basis-function-rbf-kernel-1" class="slide level2">
+<h2>The Radial Basis Function (RBF) Kernel 1</h2>
 <ul>
-<li>We see that we made things worse!</li>
-<li>Our model now uses ϵ=3, and we are unable to exploit when we land near the global maximum. Moreover, with high exploration, the setting becomes similar to active learning.</li>
-<li>Our quick experiments above help us conclude that ϵ controls the degree of exploration in the PI acquisition function.</li>
+<li><em>radial basis function</em> (RBF) kernel is the most popular covariance function for Gaussian processes</li>
+<li>kernel has the form <span class="math inline">\(k_{\text{RBF}}(x,x') = a^2\exp\left(-\frac{1}{2\ell^2}||x-x'||^2\right)\)</span>, where <span class="math inline">\(a\)</span> is an amplitude parameter, and <span class="math inline">\(\ell\)</span> is a <em>lengthscale</em> hyperparameter.</li>
+</ul>
+<p>Let’s derive this kernel starting from weight space. Consider the function</p>
+<p><span class="math display">\[f(x) = \sum_{i=1}^J w_i \phi_i(x), w_i  \sim \mathcal{N}\left(0,\frac{\sigma^2}{J}\right), \phi_i(x) = \exp\left(-\frac{(x-c_i)^2}{2\ell^2 }\right).\]</span></p>
+<p><span class="math inline">\(f(x)\)</span> is a sum of radial basis functions, with width <span class="math inline">\(\ell\)</span>, centred at the points <span class="math inline">\(c_i\)</span>, as shown in the following figure.</p>
+<ul>
+<li>We can recognize <span class="math inline">\(f(x)\)</span> as having the form <span class="math inline">\(w^{\top} \phi(x)\)</span>, where <span class="math inline">\(w = (w_1,\dots,w_J)^{\top}\)</span> and <span class="math inline">\(\phi(x)\)</span> is a vector containing each of the radial basis functions. The covariance function of this Gaussian process is then</li>
+</ul>
+<p><span class="math display">\[k(x,x') = \frac{\sigma^2}{J} \sum_{i=1}^{J} \phi_i(x)\phi_i(x').\]</span></p>
+</section>
+<section id="the-radial-basis-function-rbf-kernel-2" class="slide level2">
+<h2>The Radial Basis Function (RBF) Kernel 2</h2>
+<ul>
+<li>what happens as we take the number of parameters (and basis functions) to infinity. Let <span class="math inline">\(c_J = \log J\)</span>, <span class="math inline">\(c_1 = -\log J\)</span>, and <span class="math inline">\(c_{i+1}-c_{i} = \Delta c = 2\frac{\log J}{J}\)</span>, and <span class="math inline">\(J \to \infty\)</span>. The covariance function becomes the Riemann sum:</li>
+</ul>
+<p><span class="math display">\[k(x,x') = \lim_{J \to \infty} \frac{\sigma^2}{J} \sum_{i=1}^{J} \phi_i(x)\phi_i(x') = \int_{c_0}^{c_\infty} \phi_c(x)\phi_c(x') dc.\]</span></p>
+<p>By setting <span class="math inline">\(c_0 = -\infty\)</span> and <span class="math inline">\(c_\infty = \infty\)</span>, we spread the infinitely many basis functions across the whole real line, each a distance <span class="math inline">\(\Delta c \to 0\)</span> apart:</p>
+<p><span class="math display">\[k(x,x') = \int_{-\infty}^{\infty} \exp(-\frac{(x-c)^2}{2\ell^2}) \exp(-\frac{(x'-c)^2}{2\ell^2 }) dc = \sqrt{\pi}\ell \sigma^2 \exp(-\frac{(x-x')^2}{2(\sqrt{2} \ell)^2}) \propto k_{\text{RBF}}(x,x').\]</span></p>
+<ul>
+<li><p>By moving into the function space representation, we have derived how to represent a model with an <strong><em>infinite</em> number of parameters, using a finite amount of computation</strong>.</p></li>
+<li><p><strong>GP with an RBF kernel is a <em>universal approximator</em></strong>, capable of representing any continuous function to arbitrary precision.</p></li>
 </ul>
 </section>
-<section id="expected-improvement-introduction" class="slide level2">
-<h2>Expected Improvement: Introduction</h2>
+<section id="the-radial-basis-function-rbf-kernel-3" class="slide level2">
+<h2>The Radial Basis Function (RBF) Kernel 3</h2>
 <ul>
-<li>Probability of improvement considers <em>how likely</em> an improvement is.</li>
-<li>Expected Improvement (EI) considers <em>how much</em> we can improve.</li>
-<li><strong>Key Idea</strong>: Choose the next query point with the highest expected improvement over the current max <span class="math inline">\(f(x^+)\)</span>.</li>
+<li><p>We can intuitively see why from the above derivation.</p></li>
+<li><p>We can collapse each radial basis function to a point mass taking <span class="math inline">\(\ell \to 0\)</span>, and give each point mass any height we wish.</p></li>
+<li><p><strong>GP with an RBF kernel is a model with an infinite number of parameters and much more flexibility than any finite neural network</strong></p></li>
+<li><p><strong>all the fuss about <em>overparametrized</em> neural networks is misplaced?</strong></p></li>
+<li><p><strong>GPs with RBF kernels do not overfit</strong>, and in fact provide especially compelling generalization performance on small datasets.</p></li>
+<li><p>examples in <a href="https://dl.acm.org/doi/abs/10.1145/3446776">Zhang 2021</a>, such as the ability to fit images with random labels perfectly, but still generalize well on structured problems, (can be perfectly reproduced using Gaussian processes) <a href="https://arxiv.org/abs/2002.08791">Wilson 2020</a>.</p></li>
+<li><p>Neural networks are not as distinct as we make them out to be.</p></li>
 </ul>
 </section>
-<section id="ei-mathematical-formulation" class="slide level2">
-<h2>EI: Mathematical Formulation</h2>
+<section id="the-radial-basis-function-rbf-kernel-4" class="slide level2">
+<h2>The Radial Basis Function (RBF) Kernel 4</h2>
 <ul>
-<li><strong>Equation</strong>: <span class="math inline">\(x_{t+1} = \arg\min_x \mathbb{E} \left( ||h_{t+1}(x) - f(x^\star) || \ | \ \mathcal{D}_t \right)\)</span></li>
-<li><strong>Components</strong>:
+<li><p><strong>build further intuition about GPs with RBF kernels, and hyperparameters such as <em>length-scale</em>, by sampling directly from the distribution over functions</strong>.</p></li>
+<li><p>simple procedure:</p></li>
+</ul>
+<ol type="1">
+<li>Choose the input <span class="math inline">\(x\)</span> points we want to query the GP: <span class="math inline">\(x_1,\dots,x_n\)</span>.</li>
+<li>Evaluate <span class="math inline">\(m(x_i)\)</span>, <span class="math inline">\(i = 1,\dots,n\)</span>, and <span class="math inline">\(k(x_i,x_j)\)</span> for <span class="math inline">\(i,j = 1,\dots,n\)</span> to respectively form the mean vector and covariance matrix <span class="math inline">\(\mu\)</span> and <span class="math inline">\(K\)</span>, where <span class="math inline">\((f(x_1),\dots,f(x_n)) \sim \mathcal{N}(\mu, K)\)</span>.</li>
+<li>Sample from this multivariate Gaussian distribution to obtain the sample function values.</li>
+<li>Sample more times to visualize more sample functions queried at those points.</li>
+</ol>
+<p>We illustrate this process in the figure below.</p>
+</section>
+<section id="the-radial-basis-function-rbf-kernel-5" class="slide level2">
+<h2>The Radial Basis Function (RBF) Kernel 5</h2>
+<div id="b8bc4c17" class="cell" data-execution_count="3">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href=""></a><span class="kw">def</span> rbfkernel(x1, x2, ls<span class="op">=</span><span class="fl">4.</span>):  <span class="co">#@save</span></span>
+<span id="cb3-2"><a href=""></a>    dist <span class="op">=</span> distance_matrix(np.expand_dims(x1, <span class="dv">1</span>), np.expand_dims(x2, <span class="dv">1</span>))</span>
+<span id="cb3-3"><a href=""></a>    <span class="cf">return</span> np.exp(<span class="op">-</span>(<span class="fl">1.</span> <span class="op">/</span> ls <span class="op">/</span> <span class="dv">2</span>) <span class="op">*</span> (dist <span class="op">**</span> <span class="dv">2</span>))</span>
+<span id="cb3-4"><a href=""></a></span>
+<span id="cb3-5"><a href=""></a>x_points <span class="op">=</span> np.linspace(<span class="dv">0</span>, <span class="dv">5</span>, <span class="dv">50</span>)</span>
+<span id="cb3-6"><a href=""></a>meanvec <span class="op">=</span> np.zeros(<span class="bu">len</span>(x_points))</span>
+<span id="cb3-7"><a href=""></a>covmat <span class="op">=</span> rbfkernel(x_points,x_points, <span class="dv">1</span>)</span>
+<span id="cb3-8"><a href=""></a></span>
+<span id="cb3-9"><a href=""></a>prior_samples<span class="op">=</span> np.random.multivariate_normal(meanvec, covmat, size<span class="op">=</span><span class="dv">5</span>)<span class="op">;</span></span>
+<span id="cb3-10"><a href=""></a>d2l.plt.plot(x_points, prior_samples.T, alpha<span class="op">=</span><span class="fl">0.5</span>)</span>
+<span id="cb3-11"><a href=""></a>d2l.plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+
+</div>
+<img data-src="02_gp_priors_files/figure-revealjs/cell-4-output-1.svg" class="r-stretch"></section>
+<section id="the-neural-network-kernel-1" class="slide level2">
+<h2>The Neural Network Kernel 1</h2>
 <ul>
-<li><span class="math inline">\(f\)</span>: Actual ground truth function.</li>
-<li><span class="math inline">\(h_{t+1}\)</span>: Posterior mean of the surrogate at <span class="math inline">\(t+1^{th}\)</span> timestep.</li>
-<li><span class="math inline">\(\mathcal{D}_t\)</span>: Training data.</li>
-<li><span class="math inline">\(x^\star\)</span>: Actual position where <span class="math inline">\(f\)</span> takes the maximum value.</li>
-</ul></li>
+<li>Research on Gaussian processes in machine learning was triggered by research on neural networks.</li>
+<li>We can derive the neural network kernel as follows.</li>
+</ul>
+<p>Consider a neural network function <span class="math inline">\(f(x)\)</span> with one hidden layer:</p>
+<p><span class="math display">\[f(x) = b + \sum_{i=1}^{J} v_i h(x; u_i).\]</span></p>
+<p><span class="math inline">\(b\)</span> is a bias, <span class="math inline">\(v_i\)</span> are the hidden to output weights, <span class="math inline">\(h\)</span> is any bounded hidden unit transfer function, <span class="math inline">\(u_i\)</span> are the input to hidden weights, and <span class="math inline">\(J\)</span> is the number of hidden units.</p>
+<ul>
+<li><p>Let <span class="math inline">\(b\)</span> and <span class="math inline">\(v_i\)</span> be independent with zero mean and variances <span class="math inline">\(\sigma_b^2\)</span> and <span class="math inline">\(\sigma_v^2/J\)</span>, respectively, and let the <span class="math inline">\(u_i\)</span> have independent identical distributions.</p></li>
+<li><p>use the central limit theorem to show that any collection of function values <span class="math inline">\(f(x_1),\dots,f(x_n)\)</span> has a joint multivariate Gaussian distribution.</p></li>
 </ul>
 </section>
-<section id="ei-mockus-acquisition-function" class="slide level2">
-<h2>EI: Mockus’ Acquisition Function</h2>
+<section id="the-neural-network-kernel-2" class="slide level2">
+<h2>The Neural Network Kernel 2</h2>
+<p>The mean and covariance function of the corresponding Gaussian process are:</p>
+<p><span class="math display">\[m(x) = E[f(x)] = 0\]</span></p>
+<p><span class="math display">\[k(x,x') = \text{cov}[f(x),f(x')] = E[f(x)f(x')] = \sigma_b^2 + \frac{1}{J} \sum_{i=1}^{J} \sigma_v^2 E[h_i(x; u_i)h_i(x'; u_i)]\]</span></p>
+<p>In some cases, we can essentially evaluate this covariance function in closed form. Let <span class="math inline">\(h(x; u) = \text{erf}(u_0 + \sum_{j=1}^{P} u_j x_j)\)</span>, where <span class="math inline">\(\text{erf}(z) = \frac{2}{\sqrt{\pi}} \int_{0}^{z} e^{-t^2} dt\)</span>, and <span class="math inline">\(u \sim \mathcal{N}(0,\Sigma)\)</span>. Then <span class="math inline">\(k(x,x') = \frac{2}{\pi} \text{sin}(\frac{2 \tilde{x}^{\top} \Sigma \tilde{x}'}{\sqrt{(1 + 2 \tilde{x}^{\top} \Sigma \tilde{x})(1 + 2 \tilde{x}'^{\top} \Sigma \tilde{x}')}})\)</span>.</p>
 <ul>
-<li><strong>Equation</strong>: <span class="math inline">\(x_{t+1} = \mathrm{argmax}_x \mathbb{E} \left( {max} \{ 0, \ h_{t+1}(x) - f(x^+) \} \ | \ \mathcal{D}_t \right)\)</span></li>
-<li><strong>Components</strong>:
-<ul>
-<li>$ f(x^+) $: Maximum value encountered so far.</li>
-</ul></li>
-</ul>
-<h3 id="ei-analytical-expression-for-gp-surrogate">EI: Analytical Expression for GP Surrogate</h3>
-<ul>
-<li><strong>Equation</strong>: <span class="math inline">\(EI(x)=\begin{cases}(\mu_t(x) - f(x^+) - \epsilon)\Phi(Z) + \sigma_t(x)\phi(Z), &amp; \text{if}\ \sigma_t(x) &gt; 0\\ 0, &amp; \text{if}\ \sigma_t(x) = 0
-\end{cases}\)</span></li>
-</ul>
-<p><span class="math inline">\(Z= \frac{\mu_t(x) - f(x^+) - \epsilon}{\sigma_t(x)}\)</span></p>
-</section>
-<section id="ei-when-is-ei-high" class="slide level2">
-<h2>EI: When is EI High?</h2>
-<ul>
-<li>EI is high when:
-<ul>
-<li>The expected value of <span class="math inline">\(\mu_t(x) - f(x^+)\)</span> is high.</li>
-<li>The uncertainty <span class="math inline">\(\sigma_t(x)\)</span> around a point is high.</li>
-</ul></li>
-</ul>
-</section>
-<section id="ei-moderating-exploration-with-epsilon" class="slide level2">
-<h2>EI: Moderating Exploration with <span class="math inline">\(\epsilon\)</span></h2>
-<ul>
-<li>Adjusting <span class="math inline">\(\epsilon\)</span> moderates exploration.</li>
-<li><strong>Examples</strong>:
-<ul>
-<li><span class="math inline">\(\epsilon = 0.01\)</span>: Close to the global maxima in few iterations.</li>
-<li><span class="math inline">\(\epsilon = 0.3\)</span>: More exploration, less exploitation near the global maxima.</li>
-<li><span class="math inline">\(\epsilon = 3\)</span>: Too much exploration, quick reach near the global maxima, less exploitation.</li>
-</ul></li>
-</ul>
-</section>
-<section id="ei-visualizations" class="slide level2">
-<h2>EI: Visualizations</h2>
-</section>
-<section id="intuition-behind-ϵ-in-ei-ϵ-0.3" class="slide level2">
-<h2>Intuition behind ϵ in EI: ϵ = 0.3</h2>
-
-<img data-src="./img/0%20(4).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/1%20(4).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/2%20(4).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/3%20(4).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/4%20(4).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/5%20(4).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/6%20(4).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/7%20(4).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/8%20(4).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/9%20(4).png" class="r-stretch"></section>
-<section id="intuition-behind-ϵ-in-pi-ϵ-0.3-1" class="slide level2">
-<h2>Intuition behind ϵ in PI: ϵ = 0.3</h2>
-
-<img data-src="./img/0%20(5).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/1%20(5).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/2%20(5).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/3%20(5).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/4%20(5).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/5%20(5).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/6%20(5).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/7%20(5).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/8%20(5).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/9%20(5).png" class="r-stretch"></section>
-<section id="intuition-behind-ϵ-in-pi-ϵ-3" class="slide level2">
-<h2>Intuition behind ϵ in PI: ϵ = 3</h2>
-
-<img data-src="./img/0%20(6).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/1%20(6).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/2%20(6).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/3%20(6).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/4%20(6).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/5%20(6).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/6%20(6).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/7%20(6).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/8%20(6).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/9%20(6).png" class="r-stretch"></section>
-<section id="thompson-sampling" class="slide level2">
-<h2>Thompson Sampling</h2>
-<ul>
-<li>Samples a function from the posterior and optimizes it.</li>
-<li>Balances exploration and exploitation naturally.</li>
-</ul>
-
-<img data-src="./img/thompson.svg" class="r-stretch"></section>
-<section id="intuition-behind-thompson-sampling" class="slide level2">
-<h2>Intuition behind Thompson Sampling</h2>
-
-<img data-src="./img/0%20(7).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/1%20(7).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/2%20(7).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/3%20(7).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/4%20(7).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/5%20(7).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/6%20(7).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/7%20(7).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/8%20(7).png" class="r-stretch"></section>
-<section class="slide level2">
-
-
-<img data-src="./img/9%20(7).png" class="r-stretch"></section>
-<section id="hyperparameter-tuning" class="slide level2">
-<h2>Hyperparameter Tuning</h2>
-<ul>
-<li>Common use of Bayesian Optimization.</li>
-<li>Examples: SVM, Random Forest, Neural Networks.</li>
-<li>Bayesian Optimization efficiently searches hyperparameter space.</li>
-</ul>
-</section>
-<section id="example-svm-hyperparameter-tuning" class="slide level2">
-<h2>Example: SVM Hyperparameter Tuning</h2>
-<ul>
-<li>Optimize SVM hyperparameters ( ) and ( C ) on a dataset.</li>
-<li>Compare acquisition functions (PI, EI, UCB).</li>
+<li>RBF kernel is <em>stationary</em>, meaning that it is <em>translation invariant</em>, and therefore can be written as a function of <span class="math inline">\(\tau = x-x'\)</span>.</li>
+<li>Intuitively, stationarity means that the high-level properties of the function, such as rate of variation, do not change as we move in input space.</li>
+<li>The neural network kernel, however, is <em>non-stationary</em>.</li>
 </ul>
 </section>
 <section id="summary" class="slide level2">
 <h2>Summary</h2>
 <ul>
-<li>Bayesian Optimization is powerful for optimizing expensive black-box functions.</li>
-<li>Key elements: Surrogate model (GP), Acquisition functions (PI, EI, UCB).</li>
-<li>Applications in hyperparameter tuning for ML models.</li>
+<li><p><strong>first step in performing Bayesian inference involves specifying a prior</strong></p></li>
+<li><p>GPs can be used to specify a whole <strong>prior over functions</strong>.</p></li>
+<li><p>Starting from a traditional “weight space” view of modelling, <strong>induce a prior over functions by starting with the functional form of a model, and introducing a distribution over its parameters</strong>.</p></li>
+<li><p><strong>alternatively specify a prior distribution directly in function space</strong>, with properties controlled by a kernel.</p></li>
+<li><p><strong>function-space approach has many advantages</strong>. We can build models that actually correspond to an infinite number of parameters, but use a finite amount of computation!</p></li>
+<li><p>models have a <strong>great amount of flexibility</strong>, but <strong>also make strong assumptions</strong> about what types of functions are a priori likely, leading to relatively <strong>good generalization on small datasets</strong>.</p></li>
+<li><p>assumptions of models in function space controlled by kernels: encode higher level properties of functions, such as smoothness and periodicity</p></li>
 </ul>
+</section>
+<section class="slide level2">
 
-<img data-src="./img/comp3d.svg" class="r-stretch"></section>
-<section id="references" class="slide level2">
-<h2>References</h2>
 <ul>
-<li><a href="https://distill.pub/2020/bayesian-optimization/">Distill Article on Bayesian Optimization</a></li>
+<li><p>Many kernels are <strong>stationary</strong>: they are <strong>translation invariant</strong>.</p></li>
+<li><p>Functions drawn from GP with a stationary kernel have roughly the same high-level properties regardless of where we look in the input space.</p></li>
+<li><p>GPs a <strong>relatively general model class</strong> including polynomials, Fourier series, and so on, <strong>as long as we have a Gaussian prior over the parameters</strong>.</p></li>
+<li><p><strong>also include neural networks with an infinite number of parameters</strong>, even without Gaussian distributions over the parameters.</p></li>
 </ul>
+</section>
+<section id="exercises" class="slide level2">
+<h2>Exercises</h2>
+<ol type="1">
+<li><p>Draw sample prior functions from a GP with an Ornstein-Uhlenbeck (OU) kernel, <span class="math inline">\(k_{\text{OU}}(x,x') = \exp\left(-\frac{1}{2\ell}||x - x'|\right)\)</span>. If you fix the lengthscale <span class="math inline">\(\ell\)</span> to be the same, how do these functions look different than sample functions from a GP with an RBF kernel?</p></li>
+<li><p>How does changing the <em>amplitude</em> <span class="math inline">\(a^2\)</span> of the RBF kernel affect the distribution over functions?</p></li>
+<li><p>Suppose we form <span class="math inline">\(u(x) = f(x) + 2g(x)\)</span>, where <span class="math inline">\(f(x) \sim \mathcal{GP}(m_1,k_1)\)</span> and <span class="math inline">\(g(x) \sim \mathcal{GP}(m_2,k_2)\)</span>. Is <span class="math inline">\(u(x)\)</span> a Gaussian process, and if so, what is its mean and covariance function?</p></li>
+<li><p>Suppose we form <span class="math inline">\(g(x) = a(x)f(x)\)</span>, where <span class="math inline">\(f(x) \sim \mathcal{GP}(0,k)\)</span> and <span class="math inline">\(a(x) = x^2\)</span>. Is <span class="math inline">\(g(x)\)</span> a Gaussian process, and if so, what is its mean and covariance function? What is the effect of <span class="math inline">\(a(x)\)</span>? What do sample functions drawn from <span class="math inline">\(g(x)\)</span> look like?</p></li>
+<li><p>Suppose we form <span class="math inline">\(u(x) = f(x)g(x)\)</span>, where <span class="math inline">\(f(x) \sim \mathcal{GP}(m_1,k_1)\)</span> and <span class="math inline">\(g(x) \sim \mathcal{GP}(m_2,k_2)\)</span>. Is <span class="math inline">\(u(x)\)</span> a Gaussian process, and if so, what is its mean and covariance function?</p></li>
+</ol>
 <div class="quarto-auto-generated-content">
 <p><img src="eclipse_logo_small.png" class="slide-logo"></p>
 <div class="footer footer-default">
@@ -850,19 +707,19 @@ Philipp Pelz
   </div>
 
   <script>window.backupDefine = window.define; window.define = undefined;</script>
-  <script src="09_BayesOpt_files/libs/revealjs/dist/reveal.js"></script>
+  <script src="02_gp_priors_files/libs/revealjs/dist/reveal.js"></script>
   <!-- reveal.js plugins -->
-  <script src="09_BayesOpt_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.js"></script>
-  <script src="09_BayesOpt_files/libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
-  <script src="09_BayesOpt_files/libs/revealjs/plugin/reveal-menu/menu.js"></script>
-  <script src="09_BayesOpt_files/libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
-  <script src="09_BayesOpt_files/libs/revealjs/plugin/quarto-support/support.js"></script>
+  <script src="02_gp_priors_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.js"></script>
+  <script src="02_gp_priors_files/libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
+  <script src="02_gp_priors_files/libs/revealjs/plugin/reveal-menu/menu.js"></script>
+  <script src="02_gp_priors_files/libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
+  <script src="02_gp_priors_files/libs/revealjs/plugin/quarto-support/support.js"></script>
   
 
-  <script src="09_BayesOpt_files/libs/revealjs/plugin/notes/notes.js"></script>
-  <script src="09_BayesOpt_files/libs/revealjs/plugin/search/search.js"></script>
-  <script src="09_BayesOpt_files/libs/revealjs/plugin/zoom/zoom.js"></script>
-  <script src="09_BayesOpt_files/libs/revealjs/plugin/math/math.js"></script>
+  <script src="02_gp_priors_files/libs/revealjs/plugin/notes/notes.js"></script>
+  <script src="02_gp_priors_files/libs/revealjs/plugin/search/search.js"></script>
+  <script src="02_gp_priors_files/libs/revealjs/plugin/zoom/zoom.js"></script>
+  <script src="02_gp_priors_files/libs/revealjs/plugin/math/math.js"></script>
   <script>window.define = window.backupDefine; window.backupDefine = undefined;</script>
 
   <script>
